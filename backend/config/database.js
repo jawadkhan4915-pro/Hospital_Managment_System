@@ -10,7 +10,7 @@ const connectDB = async () => {
     });
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
-    if (mongoURI.startsWith('mongodb+srv://') && (error.message.includes('ESERVFAIL') || error.message.includes('ENOTFOUND'))) {
+    if (mongoURI.startsWith('mongodb+srv://') && (error.message.includes('ESERVFAIL') || error.message.includes('ENOTFOUND') || error.message.includes('ETIMEOUT'))) {
       logger.warn(`DNS resolution failed with "${error.message}". Retrying connection with Google and Cloudflare DNS fallback...`);
       try {
         dns.setServers(['8.8.8.8', '1.1.1.1']);
