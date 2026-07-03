@@ -5,11 +5,12 @@ import { useToast } from '../context/ToastContext.jsx';
 import { Shield, Eye, EyeOff, KeyRound, Mail, UserPlus, LogIn, Sun, Moon, Zap, Activity } from 'lucide-react';
 
 const DEMO_ACCOUNTS = [
-  { role: 'Admin',      email: 'admin@hospital.com',    password: 'admin123',    color: '#7c3aed', bg: 'rgba(124,58,237,0.12)'  },
-  { role: 'Doctor',     email: 'doctor@hospital.com',   password: 'doctor123',   color: '#0ea5e9', bg: 'rgba(14,165,233,0.12)'  },
-  { role: 'Patient',    email: 'patient@hospital.com',  password: 'patient123',  color: '#10b981', bg: 'rgba(16,185,129,0.12)'  },
-  { role: 'Nurse',      email: 'nurse@hospital.com',    password: 'nurse123',    color: '#f59e0b', bg: 'rgba(245,158,11,0.12)'  },
-  { role: 'Pharmacist', email: 'pharmacy@hospital.com', password: 'pharmacy123', color: '#ef4444', bg: 'rgba(239,68,68,0.12)'   },
+  { role: 'Admin',        email: 'admin@hospital.com',      password: 'admin123',      color: '#7c3aed', bg: 'rgba(124,58,237,0.12)'  },
+  { role: 'Doctor',       email: 'doctor@hospital.com',     password: 'doctor123',     color: '#0ea5e9', bg: 'rgba(14,165,233,0.12)'  },
+  { role: 'Receptionist', email: 'reception@hospital.com',  password: 'reception123',  color: '#06b6d4', bg: 'rgba(6,182,212,0.12)'   },
+  { role: 'Patient',      email: 'patient@hospital.com',    password: 'patient123',    color: '#10b981', bg: 'rgba(16,185,129,0.12)'  },
+  { role: 'Nurse',        email: 'nurse@hospital.com',      password: 'nurse123',      color: '#f59e0b', bg: 'rgba(245,158,11,0.12)'  },
+  { role: 'Pharmacist',   email: 'pharmacy@hospital.com',   password: 'pharmacy123',   color: '#ef4444', bg: 'rgba(239,68,68,0.12)'   },
 ];
 
 const AuthPage = () => {

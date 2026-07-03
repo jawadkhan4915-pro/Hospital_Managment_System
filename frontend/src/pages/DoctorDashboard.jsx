@@ -2,7 +2,9 @@ import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { SkeletonCard, SkeletonTable } from '../components/SkeletonLoader.jsx';
-import { Calendar, FileText, CheckCircle, FilePlus, Activity, Plus, Trash2, Clock } from 'lucide-react';
+import PrescriptionSlipModal from '../components/PrescriptionSlipModal.jsx';
+import PatientHistoryModal from '../components/PatientHistoryModal.jsx';
+import { Calendar, FileText, CheckCircle, FilePlus, Activity, Plus, Trash2, Clock, Search, History, IdCard } from 'lucide-react';
 
 const DoctorDashboard = () => {
   const { fetchWithAuth } = useContext(AuthContext);
@@ -12,6 +14,14 @@ const DoctorDashboard = () => {
   const [medicalRecords, setMedicalRecords] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   
+  // CNIC Lifetime History Lookup
+  const [cnicSearch, setCnicSearch] = useState('');
+  const [selectedHistory, setSelectedHistory] = useState(null);
+  const [searchingCnic, setSearchingCnic] = useState(false);
+
+  // Active Prescription Slip Modal
+  const [createdPrescriptionRecord, setCreatedPrescriptionRecord] = useState(null);
+
   // SOAP Notes and Clinical Form states
   const [diagnosis, setDiagnosis] = useState('');
   const [subjective, setSubjective] = useState('');
@@ -65,6 +75,27 @@ const DoctorDashboard = () => {
     setPlan('');
     setPrescription([]);
     showInfo(`Selected consultation: ${appt.patientId?.name}`);
+  };
+
+  const handleCnicSearch = async (e) => {
+    e.preventDefault();
+    if (!cnicSearch.trim()) return;
+
+    setSearchingCnic(true);
+    try {
+      const res = await fetchWithAuth(`/api/v1/patients/cnic/${encodeURIComponent(cnicSearch.trim())}`);
+      const data = await res.json();
+      if (!res.ok || !data.data) {
+        showError(`No patient history found for CNIC: ${cnicSearch}`);
+        return;
+      }
+      setSelectedHistory(data.data);
+      showSuccess(`Loaded history for ${data.data.patient.name}`);
+    } catch (err) {
+      showError('Error searching patient history');
+    } finally {
+      setSearchingCnic(false);
+    }
   };
 
   const handleAddMedication = () => {
@@ -132,6 +163,7 @@ const DoctorDashboard = () => {
       });
 
       showSuccess(`EMR & Invoice generated for ${selectedAppointment.patientId?.name}`);
+      setCreatedPrescriptionRecord(recordData.data);
       setSelectedAppointment(null);
       loadDoctorData();
     } catch (err) {
@@ -160,8 +192,37 @@ const DoctorDashboard = () => {
       <div>
         <h2>Clinical Practice Hub</h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
-          Electronic Health Records (EMR) & Patient Consultation Management
+          Electronic Health Records (EMR), CNIC Patient History Lookup & QR Prescription Issuance
         </p>
+      </div>
+
+      {/* CNIC Lookup Banner for Doctors */}
+      <div className="card" style={{ backgroundColor: 'var(--color-primary-light)', border: '1px solid rgba(37, 99, 235, 0.2)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <IdCard size={22} color="var(--color-primary)" />
+          <div>
+            <h4 style={{ margin: 0 }}>Patient CNIC History Lookup</h4>
+            <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', margin: 0 }}>
+              Search patient by CNIC to view lifetime disease records, vitals trends & past prescriptions
+            </p>
+          </div>
+        </div>
+        <form onSubmit={handleCnicSearch} style={{ display: 'flex', gap: '10px', marginTop: '12px', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
+            <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Enter Patient CNIC"
+              value={cnicSearch}
+              onChange={(e) => setCnicSearch(e.target.value)}
+              style={{ paddingLeft: '40px', height: '38px', fontSize: '0.875rem' }}
+            />
+          </div>
+          <button type="submit" className="btn btn-primary btn-sm" disabled={searchingCnic}>
+            <History size={16} /> {searchingCnic ? 'Fetching...' : 'View Lifetime EMR'}
+          </button>
+        </form>
       </div>
 
       <div style={styles.dashboardGrid}>
@@ -192,8 +253,8 @@ const DoctorDashboard = () => {
                     <span style={styles.timeLabel}>{appt.timeSlot}</span>
                   </div>
                   <div style={styles.apptDetails}>
-                    <span>Type: {appt.type}</span>
-                    <span className="badge badge-warning">{appt.status}</span>
+                    <span>CNIC: {appt.patientId?.cnic || 'N/A'}</span>
+                    <span className="badge badge-warning">{appt.roomNumber || 'Room 101'}</span>
                   </div>
                 </div>
               ))
@@ -205,9 +266,23 @@ const DoctorDashboard = () => {
         <div className="card">
           {selectedAppointment ? (
             <div>
-              <h3 style={styles.panelTitle}>
-                <FilePlus size={20} color="var(--color-success)" /> Consultation: {selectedAppointment.patientId?.name}
-              </h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={styles.panelTitle}>
+                  <FilePlus size={20} color="var(--color-success)" /> Consultation: {selectedAppointment.patientId?.name}
+                </h3>
+                {selectedAppointment.patientId?.cnic && (
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={async () => {
+                      const res = await fetchWithAuth(`/api/v1/patients/cnic/${encodeURIComponent(selectedAppointment.patientId.cnic)}`);
+                      const d = await res.json();
+                      if (d.data) setSelectedHistory(d.data);
+                    }}
+                  >
+                    <History size={14} /> Full History
+                  </button>
+                )}
+              </div>
               
               {selectedAppointment.patientId?.vitals?.length > 0 && (
                 <div style={styles.vitalsRef}>
@@ -283,7 +358,7 @@ const DoctorDashboard = () => {
                 </div>
 
                 <div style={styles.prescriptionSection}>
-                  <h4 style={{ fontSize: '0.95rem', marginBottom: '12px', fontWeight: '700' }}>Prescribe Medications</h4>
+                  <h4 style={{ fontSize: '0.95rem', marginBottom: '12px', fontWeight: '700' }}>Prescribe Medications (Embedded into QR Code)</h4>
                   <div style={styles.prescriptionFields}>
                     <input
                       type="text"
@@ -349,7 +424,7 @@ const DoctorDashboard = () => {
                 </div>
 
                 <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }} disabled={submitting}>
-                  <CheckCircle size={18} /> {submitting ? 'Submitting EMR...' : 'Complete Session & Issue EMR'}
+                  <CheckCircle size={18} /> {submitting ? 'Submitting EMR...' : 'Issue EMR & Printable QR Prescription'}
                 </button>
               </form>
             </div>
@@ -363,7 +438,7 @@ const DoctorDashboard = () => {
         </div>
       </div>
 
-      {/* Historical Records */}
+      {/* Historical Records Table */}
       <div className="card">
         <h3 style={styles.panelTitle}>
           <FileText size={20} color="var(--color-primary)" /> Clinical EMR History Log
@@ -377,12 +452,13 @@ const DoctorDashboard = () => {
                 <th>Prescribed Medications</th>
                 <th>Digital Signature</th>
                 <th>Consult Date</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {medicalRecords.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>
                     No consultation records found.
                   </td>
                 </tr>
@@ -396,6 +472,14 @@ const DoctorDashboard = () => {
                     </td>
                     <td>{rec.digitalSignature}</td>
                     <td>{new Date(rec.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => setCreatedPrescriptionRecord(rec)}
+                      >
+                        <FileText size={14} /> View QR Slip
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -403,6 +487,22 @@ const DoctorDashboard = () => {
           </table>
         </div>
       </div>
+
+      {/* Prescription Slip Modal with QR Code */}
+      {createdPrescriptionRecord && (
+        <PrescriptionSlipModal
+          record={createdPrescriptionRecord}
+          onClose={() => setCreatedPrescriptionRecord(null)}
+        />
+      )}
+
+      {/* Patient History Modal */}
+      {selectedHistory && (
+        <PatientHistoryModal
+          historyData={selectedHistory}
+          onClose={() => setSelectedHistory(null)}
+        />
+      )}
     </div>
   );
 };

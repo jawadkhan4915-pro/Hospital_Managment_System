@@ -2,15 +2,19 @@ import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { SkeletonCard, SkeletonTable } from '../components/SkeletonLoader.jsx';
-import { Pill, AlertTriangle, Plus, PackageCheck, Search } from 'lucide-react';
+import { Pill, AlertTriangle, Plus, PackageCheck, Search, QrCode, CheckCircle2 } from 'lucide-react';
 
 const PharmacistDashboard = () => {
   const { fetchWithAuth } = useContext(AuthContext);
-  const { showSuccess, showError, showWarning } = useToast();
+  const { showSuccess, showError, showWarning, showInfo } = useToast();
 
   const [inventory, setInventory] = useState([]);
   const [lowStock, setLowStock] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // QR Scanner Input & Decoded Payload State
+  const [qrInput, setQrInput] = useState('');
+  const [scannedPrescription, setScannedPrescription] = useState(null);
 
   // New Item Form
   const [itemForm, setItemForm] = useState({
@@ -23,7 +27,7 @@ const PharmacistDashboard = () => {
     price: 15,
   });
 
-  // Dispense Form
+  // Manual Dispense Form
   const [dispenseItem, setDispenseItem] = useState('');
   const [dispenseQty, setDispenseQty] = useState(1);
 
@@ -53,6 +57,52 @@ const PharmacistDashboard = () => {
       showError('Failed to load pharmacy stock catalog');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleScanQr = (e) => {
+    e.preventDefault();
+    if (!qrInput.trim()) return;
+
+    try {
+      const parsed = JSON.parse(qrInput.trim());
+      if (parsed.type !== 'PRESCRIPTION_SLIP' && !parsed.prescription) {
+        showError('Invalid prescription QR payload format');
+        return;
+      }
+      setScannedPrescription(parsed);
+      showSuccess(`QR Code Scanned for ${parsed.patientName || 'Patient'}`);
+    } catch (err) {
+      showError('Could not decode QR Code string payload');
+    }
+  };
+
+  const handleDispenseScannedRx = async () => {
+    if (!scannedPrescription || !scannedPrescription.prescription) return;
+    setSubmitting(true);
+
+    try {
+      let dispensedCount = 0;
+      for (const med of scannedPrescription.prescription) {
+        const itemInStock = inventory.find(i => i.itemName.toLowerCase().includes(med.medicineName.toLowerCase()));
+        if (itemInStock && itemInStock.quantity > 0) {
+          const newQty = Math.max(0, itemInStock.quantity - 1);
+          await fetchWithAuth(`/api/v1/inventory/${itemInStock._id}/stock`, {
+            method: 'PUT',
+            body: JSON.stringify({ quantity: newQty }),
+          });
+          dispensedCount++;
+        }
+      }
+
+      showSuccess(`Dispensed ${dispensedCount} prescribed items successfully!`);
+      setScannedPrescription(null);
+      setQrInput('');
+      loadInventoryData();
+    } catch (err) {
+      showError('Failed to complete prescription stock fulfillment');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -134,10 +184,64 @@ const PharmacistDashboard = () => {
   return (
     <div className="animate-fade-in" style={styles.container}>
       <div>
-        <h2>Pharmacy & Inventory Store</h2>
+        <h2>Pharmacy & Dispensary Station</h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
-          Pharmaceutical Stock, Dispensary & Reorder Monitoring
+          QR Code Prescription Scanning, Automated Dispensing & Stock Management
         </p>
+      </div>
+
+      {/* QR Code Scanner & Prescription Parser Panel */}
+      <div className="card" style={{ backgroundColor: 'var(--color-primary-light)', border: '1px solid rgba(37, 99, 235, 0.25)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+          <QrCode size={24} color="var(--color-primary)" />
+          <div>
+            <h3 style={{ fontSize: '1.05rem', margin: 0 }}>Scan Doctor Prescription QR Code</h3>
+            <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', margin: 0 }}>
+              Paste or scan doctor prescription QR payload to load prescribed medicines instantly
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleScanQr} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <input
+            type="text"
+            className="form-control"
+            placeholder='Paste or scan QR Code text payload (e.g. {"type":"PRESCRIPTION_SLIP",...})'
+            value={qrInput}
+            onChange={(e) => setQrInput(e.target.value)}
+            style={{ flex: 1, minWidth: '280px' }}
+          />
+          <button type="submit" className="btn btn-primary">
+            <QrCode size={16} /> Scan QR Code
+          </button>
+        </form>
+
+        {scannedPrescription && (
+          <div style={{ marginTop: '16px', padding: '16px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <h4 style={{ fontSize: '1rem', color: 'var(--color-primary)' }}>
+                Prescription File: {scannedPrescription.patientName} (CNIC: {scannedPrescription.cnic})
+              </h4>
+              <button className="btn btn-secondary btn-sm" onClick={() => setScannedPrescription(null)}>Clear</button>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px' }}>
+              <strong>Diagnosis:</strong> {scannedPrescription.diagnosis} | <strong>Signed By:</strong> {scannedPrescription.signature}
+            </p>
+
+            <h5 style={{ fontSize: '0.875rem', fontWeight: 700, marginBottom: '6px' }}>Prescribed Medicine Items:</h5>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '14px' }}>
+              {scannedPrescription.prescription?.map((med, idx) => (
+                <div key={idx} style={{ padding: '8px 12px', background: 'var(--bg-tertiary)', borderRadius: '6px', fontSize: '0.85rem' }}>
+                  <strong>{med.medicineName}</strong> - {med.dosage} ({med.frequency}) for {med.duration}
+                </div>
+              ))}
+            </div>
+
+            <button onClick={handleDispenseScannedRx} className="btn btn-success" disabled={submitting}>
+              <CheckCircle2 size={18} /> {submitting ? 'Fulfilling Stock...' : 'Auto-Dispense Prescribed Stock'}
+            </button>
+          </div>
+        )}
       </div>
 
       {lowStock.length > 0 && (

@@ -60,6 +60,14 @@ const seedData = async () => {
       status: 'Active',
     });
 
+    const receptionistUser = await User.create({
+      name: 'Sarah Jenkins',
+      email: 'reception@hospital.com',
+      password: 'reception123',
+      role: 'Receptionist',
+      status: 'Active',
+    });
+
     const patientUser = await User.create({
       name: 'John Watson',
       email: 'patient@hospital.com',

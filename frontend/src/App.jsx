@@ -25,6 +25,7 @@ const DoctorDashboard = lazy(() => import('./pages/DoctorDashboard.jsx'));
 const PatientDashboard = lazy(() => import('./pages/PatientDashboard.jsx'));
 const StaffDashboard = lazy(() => import('./pages/StaffDashboard.jsx'));
 const PharmacistDashboard = lazy(() => import('./pages/PharmacistDashboard.jsx'));
+const ReceptionistDashboard = lazy(() => import('./pages/ReceptionistDashboard.jsx'));
 
 const AppContent = () => {
   const { user, logout } = useContext(AuthContext);
@@ -47,6 +48,8 @@ const AppContent = () => {
         return <DoctorDashboard />;
       case 'Patient':
         return <PatientDashboard />;
+      case 'Receptionist':
+        return <ReceptionistDashboard />;
       case 'Nurse':
       case 'LabTechnician':
         return <StaffDashboard />;
@@ -70,6 +73,7 @@ const AppContent = () => {
       case 'Doctor': return <ClipboardList size={18} />;
       case 'Patient': return <Heart size={18} />;
       case 'Pharmacist': return <Pill size={18} />;
+      case 'Receptionist': return <BookOpen size={18} />;
       default: return <BookOpen size={18} />;
     }
   };
