@@ -1,9 +1,10 @@
 import patientRepository from '../repositories/patient.repository.js';
+import appointmentRepository from '../repositories/appointment.repository.js';
+import medicalRecordRepository from '../repositories/medicalRecord.repository.js';
 import logger from '../config/logger.js';
 
 class PatientService {
   async registerPatient(patientData) {
-    // Generate sequential patient ID
     const count = await patientRepository.count();
     const patientId = `PAT-${1000 + count + 1}`;
 
@@ -27,6 +28,20 @@ class PatientService {
   async getPatientByUserId(userId) {
     const patient = await patientRepository.findByUserId(userId);
     return patient;
+  }
+
+  async getPatientHistoryByCnic(cnic) {
+    const patient = await patientRepository.findByCnic(cnic);
+    if (!patient) {
+      return null;
+    }
+    const appointments = await appointmentRepository.findByPatientId(patient._id);
+    const medicalRecords = await medicalRecordRepository.findByPatientId(patient._id);
+    return {
+      patient,
+      appointments,
+      medicalRecords,
+    };
   }
 
   async addVitals(patientId, vitalsData) {

@@ -1,11 +1,16 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
-import { Pill, AlertTriangle, Plus, PackageCheck, Ban } from 'lucide-react';
+import { useToast } from '../context/ToastContext.jsx';
+import { SkeletonCard, SkeletonTable } from '../components/SkeletonLoader.jsx';
+import { Pill, AlertTriangle, Plus, PackageCheck, Search } from 'lucide-react';
 
 const PharmacistDashboard = () => {
   const { fetchWithAuth } = useContext(AuthContext);
+  const { showSuccess, showError, showWarning } = useToast();
+
   const [inventory, setInventory] = useState([]);
   const [lowStock, setLowStock] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // New Item Form
   const [itemForm, setItemForm] = useState({
@@ -22,8 +27,8 @@ const PharmacistDashboard = () => {
   const [dispenseItem, setDispenseItem] = useState('');
   const [dispenseQty, setDispenseQty] = useState(1);
 
-  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadInventoryData();
@@ -31,15 +36,21 @@ const PharmacistDashboard = () => {
 
   const loadInventoryData = async () => {
     try {
-      const itemsRes = await fetchWithAuth('/api/v1/inventory');
-      const itemsData = await itemsRes.json();
-      setInventory(itemsData.data || []);
+      setLoading(true);
+      const [itemsRes, lowRes] = await Promise.all([
+        fetchWithAuth('/api/v1/inventory'),
+        fetchWithAuth('/api/v1/inventory/low-stock'),
+      ]);
 
-      const lowRes = await fetchWithAuth('/api/v1/inventory/low-stock');
-      const lowData = await lowRes.json();
+      const [itemsData, lowData] = await Promise.all([
+        itemsRes.json(),
+        lowRes.json(),
+      ]);
+
+      setInventory(itemsData.data || []);
       setLowStock(lowData.data || []);
     } catch (e) {
-      console.error(e);
+      showError('Failed to load pharmacy stock catalog');
     } finally {
       setLoading(false);
     }
@@ -47,7 +58,7 @@ const PharmacistDashboard = () => {
 
   const handleAddItem = async (e) => {
     e.preventDefault();
-    setMessage('');
+    setSubmitting(true);
     try {
       const res = await fetchWithAuth('/api/v1/inventory', {
         method: 'POST',
@@ -57,29 +68,32 @@ const PharmacistDashboard = () => {
         }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to add item');
-      }
+      if (!res.ok) throw new Error(data.message || 'Failed to add item');
 
-      setMessage('Inventory item added successfully!');
+      showSuccess(`Added ${itemForm.itemName} to inventory!`);
       setItemForm({ itemName: '', category: 'Medicines', quantity: 100, reorderLevel: 20, expiryDate: '', supplier: '', price: 15 });
       loadInventoryData();
     } catch (err) {
-      setMessage(`Error: ${err.message}`);
+      showError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleDispense = async (e) => {
     e.preventDefault();
-    if (!dispenseItem || dispenseQty <= 0) return;
-    setMessage('');
+    if (!dispenseItem || dispenseQty <= 0) {
+      showError('Please select item and valid quantity');
+      return;
+    }
 
     try {
       const selected = inventory.find(i => i._id === dispenseItem);
       if (!selected) return;
 
       if (selected.quantity < dispenseQty) {
-        throw new Error(`Insufficient stock. Only ${selected.quantity} available.`);
+        showWarning(`Insufficient stock. Only ${selected.quantity} available.`);
+        return;
       }
 
       const newQty = selected.quantity - dispenseQty;
@@ -88,48 +102,62 @@ const PharmacistDashboard = () => {
         body: JSON.stringify({ quantity: newQty }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to dispense');
-      }
+      if (!res.ok) throw new Error(data.message || 'Failed to dispense');
 
-      setMessage(`Dispensed ${dispenseQty} of ${selected.itemName} successfully!`);
+      showSuccess(`Dispensed ${dispenseQty} units of ${selected.itemName}!`);
       setDispenseItem('');
       setDispenseQty(1);
       loadInventoryData();
     } catch (err) {
-      setMessage(`Error: ${err.message}`);
+      showError(err.message);
     }
   };
 
-  if (loading) return <div style={{ padding: '40px', color: 'var(--text-primary)' }}>Loading pharmacy stores...</div>;
+  const filteredInventory = useMemo(() => {
+    return inventory.filter((item) => {
+      return item.itemName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.supplier?.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+  }, [inventory, searchQuery]);
+
+  if (loading) {
+    return (
+      <div>
+        <h2 style={{ marginBottom: '24px' }}>Pharmacy & Inventory Hub</h2>
+        <SkeletonCard count={3} />
+        <SkeletonTable rows={5} cols={7} />
+      </div>
+    );
+  }
 
   return (
-    <div style={styles.container}>
-      <h2 style={{ marginBottom: '24px' }}>Pharmacy & Inventory Hub</h2>
+    <div className="animate-fade-in" style={styles.container}>
+      <div>
+        <h2>Pharmacy & Inventory Store</h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
+          Pharmaceutical Stock, Dispensary & Reorder Monitoring
+        </p>
+      </div>
 
-      {message && (
-        <div style={message.includes('Error') ? styles.errorBox : styles.successBox}>
-          {message}
-        </div>
-      )}
-
-      {/* Low Stock Alerts */}
       {lowStock.length > 0 && (
-        <div className="glass" style={styles.alertBanner}>
+        <div style={styles.alertBanner}>
           <div style={styles.alertHeader}>
             <AlertTriangle size={20} color="var(--color-danger)" />
-            <span style={{ fontWeight: 600, color: 'var(--color-danger)' }}>Low Stock Warnings!</span>
+            <span style={{ fontWeight: 700, color: 'var(--color-danger)' }}>Critical Reorder Alerts ({lowStock.length})</span>
           </div>
-          <p style={{ fontSize: '0.85rem', marginTop: '5px' }}>
-            The following items are below their minimum threshold limits: {lowStock.map(i => i.itemName).join(', ')}
+          <p style={{ fontSize: '0.875rem', marginTop: '6px', color: 'var(--text-secondary)' }}>
+            The following items are below minimum thresholds: <strong>{lowStock.map(i => i.itemName).join(', ')}</strong>
           </p>
         </div>
       )}
 
       <div style={styles.contentGrid}>
         {/* Add Inventory Item */}
-        <div className="glass" style={styles.card}>
-          <h3 style={styles.cardTitle}><Plus size={20} color="var(--color-primary)" /> Register Store Supply / Medicine</h3>
+        <div className="card">
+          <h3 style={styles.cardTitle}>
+            <Plus size={20} color="var(--color-primary)" /> Register Store Supply / Medicine
+          </h3>
           <form onSubmit={handleAddItem} style={styles.form}>
             <div className="form-group">
               <label className="form-label">Item Name</label>
@@ -168,7 +196,7 @@ const PharmacistDashboard = () => {
             </div>
             <div style={styles.formRow}>
               <div className="form-group" style={{ flex: 1 }}>
-                <label className="form-label">Opening Quantity</label>
+                <label className="form-label">Quantity</label>
                 <input
                   type="number"
                   className="form-control"
@@ -178,7 +206,7 @@ const PharmacistDashboard = () => {
                 />
               </div>
               <div className="form-group" style={{ flex: 1 }}>
-                <label className="form-label">Reorder Alert Level</label>
+                <label className="form-label">Reorder Limit</label>
                 <input
                   type="number"
                   className="form-control"
@@ -209,23 +237,27 @@ const PharmacistDashboard = () => {
                 />
               </div>
             </div>
-            <button type="submit" className="btn btn-primary">Add Store Entry</button>
+            <button type="submit" className="btn btn-primary" disabled={submitting}>
+              {submitting ? 'Registering...' : 'Add Store Entry'}
+            </button>
           </form>
         </div>
 
         {/* Dispense Medicine Panel */}
-        <div className="glass" style={styles.card}>
-          <h3 style={styles.cardTitle}><PackageCheck size={20} color="var(--color-success)" /> Dispense Medicine Stock</h3>
+        <div className="card">
+          <h3 style={styles.cardTitle}>
+            <PackageCheck size={20} color="var(--color-success)" /> Dispense Prescribed Stock
+          </h3>
           <form onSubmit={handleDispense} style={styles.form}>
             <div className="form-group">
-              <label className="form-label">Select Supply Item</label>
+              <label className="form-label">Select Inventory Supply</label>
               <select
                 className="form-control"
                 value={dispenseItem}
                 onChange={(e) => setDispenseItem(e.target.value)}
                 required
               >
-                <option value="">-- Choose Item --</option>
+                <option value="">-- Select Item --</option>
                 {inventory.map(item => (
                   <option key={item._id} value={item._id}>
                     {item.itemName} (Available: {item.quantity})
@@ -234,7 +266,7 @@ const PharmacistDashboard = () => {
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Dispense Quantity</label>
+              <label className="form-label">Dispense Units</label>
               <input
                 type="number"
                 className="form-control"
@@ -244,47 +276,65 @@ const PharmacistDashboard = () => {
                 required
               />
             </div>
-            <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--color-success)' }}>
-              Dispense Stock Units
+            <button type="submit" className="btn btn-success">
+              <PackageCheck size={18} /> Dispense Stock Units
             </button>
           </form>
         </div>
       </div>
 
       {/* Inventory Table */}
-      <div className="glass" style={{ ...styles.card, marginTop: '30px' }}>
-        <h3 style={styles.cardTitle}><Pill size={20} color="var(--color-primary)" /> Medicine Stock Directory</h3>
-        <div className="table-container" style={{ marginTop: '15px' }}>
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+          <h3 style={styles.cardTitle}>
+            <Pill size={20} color="var(--color-primary)" /> Medicine Stock Directory
+          </h3>
+          <div style={{ position: 'relative', width: '260px' }}>
+            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search medicine..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ paddingLeft: '36px', height: '38px', fontSize: '0.875rem' }}
+            />
+          </div>
+        </div>
+
+        <div className="table-container">
           <table>
             <thead>
               <tr>
                 <th>Item Name</th>
                 <th>Category</th>
                 <th>Units In Stock</th>
-                <th>Reorder Level</th>
+                <th>Reorder Limit</th>
                 <th>Unit Price</th>
                 <th>Expiry Date</th>
                 <th>Supplier</th>
               </tr>
             </thead>
             <tbody>
-              {inventory.length === 0 ? (
+              {filteredInventory.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Inventory stores empty.</td>
+                  <td colSpan="7" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>
+                    No inventory records found.
+                  </td>
                 </tr>
               ) : (
-                inventory.map((item) => {
+                filteredInventory.map((item) => {
                   const isLow = item.quantity <= item.reorderLevel;
                   const isExpired = item.expiryDate && new Date(item.expiryDate) < new Date();
                   return (
                     <tr key={item._id}>
-                      <td><span style={{ fontWeight: 600 }}>{item.itemName}</span></td>
+                      <td><span style={{ fontWeight: 700 }}>{item.itemName}</span></td>
                       <td>{item.category}</td>
                       <td>
-                        <span style={{ fontWeight: 600, color: isLow ? 'var(--color-danger)' : 'inherit' }}>
+                        <span style={{ fontWeight: 700, color: isLow ? 'var(--color-danger)' : 'inherit' }}>
                           {item.quantity}
                         </span>
-                        {isLow && <span className="badge badge-danger" style={{ marginLeft: '8px' }}>Low</span>}
+                        {isLow && <span className="badge badge-danger" style={{ marginLeft: '8px' }}>Low Stock</span>}
                       </td>
                       <td>{item.reorderLevel}</td>
                       <td>${item.price.toFixed(2)}</td>
@@ -313,15 +363,15 @@ const PharmacistDashboard = () => {
 
 const styles = {
   container: {
-    padding: '30px',
-    animation: 'fadeIn 0.5s ease-out',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
   },
   alertBanner: {
-    padding: '16px',
-    borderRadius: 'var(--border-radius-sm)',
-    backgroundColor: 'rgba(239, 68, 68, 0.05)',
-    borderLeft: '4px solid var(--color-danger)',
-    marginBottom: '25px',
+    padding: '16px 20px',
+    borderRadius: 'var(--border-radius-md)',
+    backgroundColor: 'var(--color-danger-light)',
+    border: '1px solid rgba(239, 68, 68, 0.3)',
   },
   alertHeader: {
     display: 'flex',
@@ -330,18 +380,13 @@ const styles = {
   },
   contentGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '30px',
-  },
-  card: {
-    padding: '30px',
-    borderRadius: 'var(--border-radius-md)',
-    boxShadow: 'var(--box-shadow-md)',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
+    gap: '24px',
   },
   cardTitle: {
-    fontSize: '1.25rem',
-    marginBottom: '20px',
-    color: 'var(--text-primary)',
+    fontSize: '1.15rem',
+    fontWeight: '700',
+    marginBottom: '16px',
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
@@ -349,29 +394,11 @@ const styles = {
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '15px',
+    gap: '14px',
   },
   formRow: {
     display: 'flex',
-    gap: '15px',
-  },
-  successBox: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    color: 'var(--color-success)',
-    padding: '12px',
-    borderRadius: 'var(--border-radius-sm)',
-    marginBottom: '20px',
-    fontSize: '0.9rem',
-    border: '1px solid rgba(16, 185, 129, 0.2)',
-  },
-  errorBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    color: 'var(--color-danger)',
-    padding: '12px',
-    borderRadius: 'var(--border-radius-sm)',
-    marginBottom: '20px',
-    fontSize: '0.9rem',
-    border: '1px solid rgba(239, 68, 68, 0.2)',
+    gap: '14px',
   },
 };
 

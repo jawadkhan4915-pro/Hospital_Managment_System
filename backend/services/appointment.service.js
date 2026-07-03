@@ -3,7 +3,7 @@ import staffRepository from '../repositories/staff.repository.js';
 import logger from '../config/logger.js';
 
 class AppointmentService {
-  async bookAppointment(patientId, doctorId, dateString, timeSlot, type, reason) {
+  async bookAppointment(patientId, doctorId, dateString, timeSlot, type, reason, roomNumber = 'Room 101') {
     // Validate doctor exists and is active
     const doctor = await staffRepository.findById(doctorId);
     if (!doctor || doctor.status !== 'Active') {
@@ -33,6 +33,7 @@ class AppointmentService {
       type,
       reason,
       queueNumber,
+      roomNumber: roomNumber || 'Room 101',
     });
 
     logger.info(`Appointment booked: Patient ${patientId} with Doctor ${doctorId}. Queue: ${queueNumber}`);

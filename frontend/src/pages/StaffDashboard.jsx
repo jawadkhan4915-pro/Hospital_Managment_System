@@ -1,12 +1,17 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
-import { UserPlus, Heart, Calendar, Plus, Eye } from 'lucide-react';
+import { useToast } from '../context/ToastContext.jsx';
+import { SkeletonCard, SkeletonTable } from '../components/SkeletonLoader.jsx';
+import { UserPlus, Heart, Calendar, Eye, Search } from 'lucide-react';
 
 const StaffDashboard = () => {
   const { fetchWithAuth } = useContext(AuthContext);
+  const { showSuccess, showError, showInfo } = useToast();
+
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // New Patient Form
   const [patientForm, setPatientForm] = useState({
@@ -36,8 +41,8 @@ const StaffDashboard = () => {
     reason: '',
   });
 
-  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadStaffData();
@@ -45,15 +50,21 @@ const StaffDashboard = () => {
 
   const loadStaffData = async () => {
     try {
-      const patientRes = await fetchWithAuth('/api/v1/patients');
-      const patientData = await patientRes.json();
-      setPatients(patientData.data || []);
+      setLoading(true);
+      const [patientRes, docsRes] = await Promise.all([
+        fetchWithAuth('/api/v1/patients'),
+        fetchWithAuth('/api/v1/staff/doctors'),
+      ]);
 
-      const docsRes = await fetchWithAuth('/api/v1/staff/doctors');
-      const docsData = await docsRes.json();
+      const [patientData, docsData] = await Promise.all([
+        patientRes.json(),
+        docsRes.json(),
+      ]);
+
+      setPatients(patientData.data || []);
       setDoctors(docsData.data || []);
     } catch (e) {
-      console.error(e);
+      showError('Failed to load triage registry');
     } finally {
       setLoading(false);
     }
@@ -61,7 +72,7 @@ const StaffDashboard = () => {
 
   const handleRegisterPatient = async (e) => {
     e.preventDefault();
-    setMessage('');
+    setSubmitting(true);
     try {
       const res = await fetchWithAuth('/api/v1/patients', {
         method: 'POST',
@@ -75,22 +86,21 @@ const StaffDashboard = () => {
         }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to register patient profile');
-      }
+      if (!res.ok) throw new Error(data.message || 'Failed to register patient');
 
-      setMessage('Walk-in patient registered successfully!');
+      showSuccess(`Walk-in patient ${patientForm.name} registered!`);
       setPatientForm({ name: '', dob: '', gender: 'Male', phone: '', address: '', blood: 'O+' });
       loadStaffData();
     } catch (err) {
-      setMessage(`Error: ${err.message}`);
+      showError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleAddVitals = async (e) => {
     e.preventDefault();
     if (!selectedPatient) return;
-    setMessage('');
 
     try {
       const res = await fetchWithAuth(`/api/v1/patients/${selectedPatient._id}/vitals`, {
@@ -104,23 +114,23 @@ const StaffDashboard = () => {
         }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to update vitals');
-      }
+      if (!res.ok) throw new Error(data.message || 'Failed to update vitals');
 
-      setMessage(`Vitals recorded for patient ${selectedPatient.name}`);
+      showSuccess(`Vitals recorded for ${selectedPatient.name}`);
       setVitalsForm({ weight: '', height: '', bp: '', temp: '', pulse: '' });
       setSelectedPatient(null);
       loadStaffData();
     } catch (err) {
-      setMessage(`Error: ${err.message}`);
+      showError(err.message);
     }
   };
 
   const handleBookWalkIn = async (e) => {
     e.preventDefault();
-    if (!selectedPatient || !apptForm.doctorId || !apptForm.date) return;
-    setMessage('');
+    if (!selectedPatient || !apptForm.doctorId || !apptForm.date) {
+      showError('Select a doctor and date for appointment');
+      return;
+    }
 
     try {
       const res = await fetchWithAuth('/api/v1/appointments', {
@@ -135,41 +145,57 @@ const StaffDashboard = () => {
         }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to book appointment');
-      }
+      if (!res.ok) throw new Error(data.message || 'Failed to book appointment');
 
-      setMessage(`Appointment scheduled successfully for ${selectedPatient.name}`);
+      showSuccess(`Appointment reserved for ${selectedPatient.name}`);
       setApptForm({ doctorId: '', date: '', slot: '09:00 - 09:30', type: 'Walk-In', reason: '' });
       setSelectedPatient(null);
       loadStaffData();
     } catch (err) {
-      setMessage(`Error: ${err.message}`);
+      showError(err.message);
     }
   };
 
-  if (loading) return <div style={{ padding: '40px', color: 'var(--text-primary)' }}>Loading registry desk...</div>;
+  const filteredPatients = useMemo(() => {
+    return patients.filter((pat) => {
+      return pat.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        pat.patientId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        pat.phone?.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+  }, [patients, searchQuery]);
+
+  if (loading) {
+    return (
+      <div>
+        <h2 style={{ marginBottom: '24px' }}>Nurse & Receptionist Hub</h2>
+        <SkeletonCard count={3} />
+        <SkeletonTable rows={5} cols={6} />
+      </div>
+    );
+  }
 
   return (
-    <div style={styles.container}>
-      <h2 style={{ marginBottom: '24px' }}>Nurse & Receptionist Hub</h2>
-      
-      {message && (
-        <div style={message.includes('Error') ? styles.errorBox : styles.successBox}>
-          {message}
-        </div>
-      )}
+    <div className="animate-fade-in" style={styles.container}>
+      <div>
+        <h2>Nurse & Triage Desk</h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
+          Walk-In Intake, Vital Signs Recording & Queue Assignment
+        </p>
+      </div>
 
       <div style={styles.contentGrid}>
         {/* Register Patient Profile */}
-        <div className="glass" style={styles.card}>
-          <h3 style={styles.cardTitle}><UserPlus size={20} color="var(--color-primary)" /> Register Walk-in Patient</h3>
+        <div className="card">
+          <h3 style={styles.cardTitle}>
+            <UserPlus size={20} color="var(--color-primary)" /> Register Walk-in Patient
+          </h3>
           <form onSubmit={handleRegisterPatient} style={styles.form}>
             <div className="form-group">
               <label className="form-label">Full Name</label>
               <input
                 type="text"
                 className="form-control"
+                placeholder="Jane Smith"
                 value={patientForm.name}
                 onChange={(e) => setPatientForm({ ...patientForm, name: e.target.value })}
                 required
@@ -205,6 +231,7 @@ const StaffDashboard = () => {
                 <input
                   type="tel"
                   className="form-control"
+                  placeholder="+1 555-0188"
                   value={patientForm.phone}
                   onChange={(e) => setPatientForm({ ...patientForm, phone: e.target.value })}
                   required
@@ -233,27 +260,34 @@ const StaffDashboard = () => {
               <input
                 type="text"
                 className="form-control"
+                placeholder="456 Medical Blvd"
                 value={patientForm.address}
                 onChange={(e) => setPatientForm({ ...patientForm, address: e.target.value })}
                 required
               />
             </div>
-            <button type="submit" className="btn btn-primary">Create Patient Registry</button>
+            <button type="submit" className="btn btn-primary" disabled={submitting}>
+              {submitting ? 'Registering...' : 'Create Patient Registry'}
+            </button>
           </form>
         </div>
 
         {/* Dynamic Vitals & Appointments Panel */}
-        <div className="glass" style={styles.card}>
+        <div className="card">
           {selectedPatient ? (
             <div>
               <div style={styles.selectedHeader}>
                 <h3 style={styles.cardTitle}>Selected: {selectedPatient.name}</h3>
-                <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem' }} onClick={() => setSelectedPatient(null)}>Cancel</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setSelectedPatient(null)}>
+                  Cancel
+                </button>
               </div>
 
               {/* Record Vitals form */}
-              <form onSubmit={handleAddVitals} style={{ ...styles.form, marginBottom: '30px' }}>
-                <h4 style={styles.sectionHeader}><Heart size={16} color="var(--color-danger)" /> Capture Vitals</h4>
+              <form onSubmit={handleAddVitals} style={{ ...styles.form, marginBottom: '24px' }}>
+                <h4 style={styles.sectionHeader}>
+                  <Heart size={16} color="var(--color-danger)" /> Capture Vitals
+                </h4>
                 <div style={styles.formRow}>
                   <div className="form-group" style={{ flex: 1 }}>
                     <label className="form-label">BP (mmHg)</label>
@@ -278,12 +312,14 @@ const StaffDashboard = () => {
                     <input type="number" step="0.1" className="form-control" placeholder="175" value={vitalsForm.height} onChange={(e) => setVitalsForm({ ...vitalsForm, height: e.target.value })} required />
                   </div>
                 </div>
-                <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--color-success)' }}>Record Vitals</button>
+                <button type="submit" className="btn btn-success">Record Vitals</button>
               </form>
 
               {/* Book Appointment form */}
               <form onSubmit={handleBookWalkIn} style={styles.form}>
-                <h4 style={styles.sectionHeader}><Calendar size={16} color="var(--color-primary)" /> Assign Doctor Session</h4>
+                <h4 style={styles.sectionHeader}>
+                  <Calendar size={16} color="var(--color-primary)" /> Assign Doctor Session
+                </h4>
                 <div className="form-group">
                   <label className="form-label">Assign Doctor</label>
                   <select
@@ -321,17 +357,32 @@ const StaffDashboard = () => {
               </form>
             </div>
           ) : (
-            <div style={styles.emptyAction}>
-              <Heart size={44} color="var(--text-tertiary)" />
-              <p>Select a patient from the listing to assign vitals or book doctor queues</p>
+            <div className="empty-state">
+              <Heart size={44} className="empty-state-icon" />
+              <h4>Select a Patient Below</h4>
+              <p style={{ fontSize: '0.875rem' }}>Choose any patient from the registry below to log vitals or assign a consultation doctor queue.</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Patients List */}
-      <div className="glass" style={{ ...styles.card, marginTop: '30px' }}>
-        <h3 style={styles.cardTitle}>Hospital Medical Registries</h3>
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+          <h3 style={styles.cardTitle}>Hospital Patient Directory</h3>
+          <div style={{ position: 'relative', width: '260px' }}>
+            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search patient..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ paddingLeft: '36px', height: '38px', fontSize: '0.875rem' }}
+            />
+          </div>
+        </div>
+
         <div className="table-container">
           <table>
             <thead>
@@ -345,17 +396,19 @@ const StaffDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {patients.length === 0 ? (
+              {filteredPatients.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No patients found.</td>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>
+                    No patients matched your search.
+                  </td>
                 </tr>
               ) : (
-                patients.map((pat) => {
+                filteredPatients.map((pat) => {
                   const latestVitals = pat.vitals && pat.vitals.length > 0 ? pat.vitals[pat.vitals.length - 1] : null;
                   return (
                     <tr key={pat._id}>
-                      <td><span style={{ fontWeight: 600 }}>{pat.patientId}</span></td>
-                      <td>{pat.name}</td>
+                      <td><span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{pat.patientId}</span></td>
+                      <td style={{ fontWeight: 600 }}>{pat.name}</td>
                       <td>{pat.phone}</td>
                       <td>{pat.gender} ({new Date().getFullYear() - new Date(pat.dateOfBirth).getFullYear()} y/o)</td>
                       <td>
@@ -369,9 +422,11 @@ const StaffDashboard = () => {
                       </td>
                       <td>
                         <button
-                          className="btn btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                          onClick={() => setSelectedPatient(pat)}
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => {
+                            setSelectedPatient(pat);
+                            showInfo(`Managing ${pat.name}`);
+                          }}
                         >
                           <Eye size={14} /> Manage Patient
                         </button>
@@ -390,30 +445,27 @@ const StaffDashboard = () => {
 
 const styles = {
   container: {
-    padding: '30px',
-    animation: 'fadeIn 0.5s ease-out',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
   },
   contentGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '30px',
-  },
-  card: {
-    padding: '30px',
-    borderRadius: 'var(--border-radius-md)',
-    boxShadow: 'var(--box-shadow-md)',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
+    gap: '24px',
   },
   cardTitle: {
-    fontSize: '1.25rem',
-    marginBottom: '20px',
-    color: 'var(--text-primary)',
+    fontSize: '1.15rem',
+    fontWeight: '700',
+    marginBottom: '16px',
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
   },
   sectionHeader: {
-    fontSize: '0.95rem',
-    marginBottom: '15px',
+    fontSize: '0.925rem',
+    fontWeight: '700',
+    marginBottom: '14px',
     color: 'var(--text-primary)',
     display: 'flex',
     alignItems: 'center',
@@ -424,45 +476,17 @@ const styles = {
   selectedHeader: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '15px',
+    alignItems: 'center',
+    marginBottom: '16px',
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '15px',
+    gap: '14px',
   },
   formRow: {
     display: 'flex',
-    gap: '15px',
-  },
-  emptyAction: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '400px',
-    color: 'var(--text-tertiary)',
-    textAlign: 'center',
-    gap: '15px',
-  },
-  successBox: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    color: 'var(--color-success)',
-    padding: '12px',
-    borderRadius: 'var(--border-radius-sm)',
-    marginBottom: '20px',
-    fontSize: '0.9rem',
-    border: '1px solid rgba(16, 185, 129, 0.2)',
-  },
-  errorBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    color: 'var(--color-danger)',
-    padding: '12px',
-    borderRadius: 'var(--border-radius-sm)',
-    marginBottom: '20px',
-    fontSize: '0.9rem',
-    border: '1px solid rgba(239, 68, 68, 0.2)',
+    gap: '14px',
   },
 };
 

@@ -39,6 +39,18 @@ export const addVitals = async (req, res, next) => {
   }
 };
 
+export const getPatientByCnic = async (req, res, next) => {
+  try {
+    const data = await patientService.getPatientHistoryByCnic(req.params.cnic);
+    if (!data) {
+      return res.status(404).json({ success: false, message: 'No patient record found with this CNIC' });
+    }
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getAllPatients = async (req, res, next) => {
   try {
     const patients = await patientService.getAllPatients();

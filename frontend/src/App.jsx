@@ -1,23 +1,44 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, lazy, Suspense } from 'react';
 import { AuthContext } from './context/AuthContext.jsx';
 import { ThemeContext } from './context/ThemeContext.jsx';
-import AuthPage from './pages/AuthPage.jsx';
-import AdminDashboard from './pages/AdminDashboard.jsx';
-import DoctorDashboard from './pages/DoctorDashboard.jsx';
-import PatientDashboard from './pages/PatientDashboard.jsx';
-import StaffDashboard from './pages/StaffDashboard.jsx';
-import PharmacistDashboard from './pages/PharmacistDashboard.jsx';
-import { Sun, Moon, LogOut, ShieldAlert, Heart, ClipboardList, BookOpen, Pill, LayoutDashboard } from 'lucide-react';
+import { ToastProvider } from './context/ToastContext.jsx';
+import { SkeletonCard } from './components/SkeletonLoader.jsx';
+import {
+  Sun,
+  Moon,
+  LogOut,
+  ShieldAlert,
+  Heart,
+  ClipboardList,
+  BookOpen,
+  Pill,
+  LayoutDashboard,
+  Menu,
+  X,
+  Activity
+} from 'lucide-react';
 
-const App = () => {
+// Lazy loading dashboard modules for optimal chunking & faster initial page load
+const AuthPage = lazy(() => import('./pages/AuthPage.jsx'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
+const DoctorDashboard = lazy(() => import('./pages/DoctorDashboard.jsx'));
+const PatientDashboard = lazy(() => import('./pages/PatientDashboard.jsx'));
+const StaffDashboard = lazy(() => import('./pages/StaffDashboard.jsx'));
+const PharmacistDashboard = lazy(() => import('./pages/PharmacistDashboard.jsx'));
+
+const AppContent = () => {
   const { user, logout } = useContext(AuthContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (!user) {
-    return <AuthPage />;
+    return (
+      <Suspense fallback={<div style={styles.centerLoading}><Activity className="toast-icon info" size={40} /></div>}>
+        <AuthPage />
+      </Suspense>
+    );
   }
 
-  // Choose the dashboard view to render based on the user's role
   const renderDashboardContent = () => {
     switch (user.role) {
       case 'Admin':
@@ -27,16 +48,17 @@ const App = () => {
       case 'Patient':
         return <PatientDashboard />;
       case 'Nurse':
+      case 'LabTechnician':
         return <StaffDashboard />;
       case 'Pharmacist':
         return <PharmacistDashboard />;
-      case 'LabTechnician':
-        return <StaffDashboard />; // nurse/lab tech share walk-in/vital desks
       default:
         return (
-          <div style={{ padding: '40px', color: 'var(--text-primary)' }}>
-            <h3>HMS Portal Access Allowed</h3>
-            <p style={{ color: 'var(--text-secondary)' }}>Welcome back, {user.name}. You are logged in with role: <strong>{user.role}</strong>.</p>
+          <div className="card" style={{ padding: '40px' }}>
+            <h3>HMS Portal Access Granted</h3>
+            <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>
+              Welcome back, <strong>{user.name}</strong>. You are currently operating with role: <strong>{user.role}</strong>.
+            </p>
           </div>
         );
     }
@@ -44,21 +66,26 @@ const App = () => {
 
   const getRoleIcon = () => {
     switch (user.role) {
-      case 'Admin': return <ShieldAlert size={20} />;
-      case 'Doctor': return <ClipboardList size={20} />;
-      case 'Patient': return <Heart size={20} />;
-      case 'Pharmacist': return <Pill size={20} />;
-      default: return <BookOpen size={20} />;
+      case 'Admin': return <ShieldAlert size={18} />;
+      case 'Doctor': return <ClipboardList size={18} />;
+      case 'Patient': return <Heart size={18} />;
+      case 'Pharmacist': return <Pill size={18} />;
+      default: return <BookOpen size={18} />;
     }
   };
 
   return (
     <div style={styles.appShell}>
       {/* Sidebar Layout */}
-      <aside className="glass" style={styles.sidebar}>
+      <aside className={`glass ${mobileMenuOpen ? 'mobile-active' : ''}`} style={styles.sidebar}>
         <div style={styles.logoBox}>
-          <span style={{ fontSize: '1.5rem', marginRight: '8px' }}>🏥</span>
-          <span style={styles.logoText}>Enterprise HMS</span>
+          <div style={styles.logoIcon}>
+            <Activity size={24} color="#ffffff" />
+          </div>
+          <div>
+            <div style={styles.logoText}>Enterprise HMS</div>
+            <div style={styles.logoSubtext}>Healthcare Intelligence</div>
+          </div>
         </div>
 
         {/* User Card */}
@@ -85,7 +112,7 @@ const App = () => {
 
         {/* Logout Button */}
         <button onClick={logout} style={styles.logoutBtn}>
-          <LogOut size={20} />
+          <LogOut size={18} />
           <span>Exit System</span>
         </button>
       </aside>
@@ -94,20 +121,40 @@ const App = () => {
       <div style={styles.workspace}>
         {/* Workspace Top Header */}
         <header className="glass" style={styles.header}>
-          <h1 style={styles.headerTitle}>Enterprise Healthcare Management System</h1>
-          <button onClick={toggleTheme} style={styles.themeBtn}>
-            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={styles.mobileToggleBtn}
+              aria-label="Toggle Navigation"
+            >
+              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+            <h1 style={styles.headerTitle}>Enterprise Hospital Management System</h1>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button onClick={toggleTheme} style={styles.themeBtn} title="Toggle Theme Mode">
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+          </div>
         </header>
 
         {/* Workspace Body */}
         <main style={styles.mainContent}>
-          {renderDashboardContent()}
+          <Suspense fallback={<SkeletonCard count={3} />}>
+            {renderDashboardContent()}
+          </Suspense>
         </main>
       </div>
     </div>
   );
 };
+
+const App = () => (
+  <ToastProvider>
+    <AppContent />
+  </ToastProvider>
+);
 
 const styles = {
   appShell: {
@@ -115,68 +162,89 @@ const styles = {
     minHeight: '100vh',
     backgroundColor: 'var(--bg-primary)',
     color: 'var(--text-primary)',
-    transition: 'all 0.3s',
   },
   sidebar: {
     width: '280px',
     borderRight: '1px solid var(--border-color)',
-    padding: '30px 20px',
+    padding: '28px 20px',
     display: 'flex',
     flexDirection: 'column',
     position: 'fixed',
     top: 0,
     bottom: 0,
     left: 0,
-    zIndex: 10,
+    zIndex: 100,
+    transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
   },
   logoBox: {
     display: 'flex',
     alignItems: 'center',
-    marginBottom: '40px',
+    gap: '12px',
+    marginBottom: '32px',
+  },
+  logoIcon: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '12px',
+    background: 'var(--gradient-primary)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
   },
   logoText: {
-    fontSize: '1.25rem',
+    fontSize: '1.15rem',
     fontWeight: '800',
     color: 'var(--text-primary)',
     letterSpacing: '-0.02em',
+    lineHeight: 1.2,
+  },
+  logoSubtext: {
+    fontSize: '0.725rem',
+    color: 'var(--text-tertiary)',
+    fontWeight: '500',
   },
   userCard: {
     display: 'flex',
     alignItems: 'center',
-    gap: '15px',
-    padding: '16px',
+    gap: '14px',
+    padding: '14px',
     borderRadius: 'var(--border-radius-md)',
     backgroundColor: 'var(--bg-tertiary)',
-    marginBottom: '30px',
+    marginBottom: '28px',
     border: '1px solid var(--border-color)',
   },
   avatar: {
-    width: '44px',
-    height: '44px',
+    width: '42px',
+    height: '42px',
     borderRadius: '50%',
-    backgroundColor: 'var(--color-primary)',
-    color: 'white',
+    background: 'var(--gradient-primary)',
+    color: '#ffffff',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontWeight: '700',
     fontSize: '1.1rem',
+    boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)',
   },
   userInfo: {
     display: 'flex',
     flexDirection: 'column',
     gap: '4px',
+    overflow: 'hidden',
   },
   userName: {
     fontWeight: '600',
-    fontSize: '0.95rem',
+    fontSize: '0.925rem',
     color: 'var(--text-primary)',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   roleBadge: {
-    display: 'flex',
+    display: 'inline-flex',
     alignItems: 'center',
     gap: '6px',
-    padding: '3px 8px',
   },
   nav: {
     display: 'flex',
@@ -188,54 +256,64 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    padding: '14px 16px',
+    padding: '12px 16px',
     borderRadius: 'var(--border-radius-sm)',
     color: 'var(--text-secondary)',
     cursor: 'pointer',
-    transition: 'all 0.3s',
+    transition: 'all var(--transition-fast)',
   },
   navItemActive: {
     backgroundColor: 'var(--color-primary-light)',
     color: 'var(--color-primary)',
     fontWeight: '600',
+    borderLeft: '3px solid var(--color-primary)',
   },
   logoutBtn: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    padding: '14px 16px',
+    padding: '12px 16px',
     borderRadius: 'var(--border-radius-sm)',
     color: 'var(--color-danger)',
-    background: 'none',
-    border: 'none',
+    background: 'transparent',
+    border: '1px solid transparent',
     cursor: 'pointer',
     fontFamily: 'var(--font-family)',
-    fontSize: '0.95rem',
+    fontSize: '0.925rem',
+    fontWeight: '600',
     width: '100%',
-    textAlign: 'left',
-    transition: 'opacity 0.3s',
+    transition: 'all var(--transition-fast)',
   },
   workspace: {
     flexGrow: 1,
-    marginLeft: '280px', // make room for fixed sidebar
+    marginLeft: '280px',
     display: 'flex',
     flexDirection: 'column',
     minHeight: '100vh',
+    width: 'calc(100% - 280px)',
   },
   header: {
-    height: '80px',
+    height: '76px',
     borderBottom: '1px solid var(--border-color)',
-    padding: '0 40px',
+    padding: '0 32px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     position: 'sticky',
     top: 0,
-    zIndex: 9,
+    zIndex: 90,
   },
   headerTitle: {
-    fontSize: '1.25rem',
-    fontWeight: '600',
+    fontSize: '1.2rem',
+    fontWeight: '700',
+    letterSpacing: '-0.02em',
+  },
+  mobileToggleBtn: {
+    display: 'none',
+    background: 'none',
+    border: 'none',
+    color: 'var(--text-primary)',
+    cursor: 'pointer',
   },
   themeBtn: {
     background: 'var(--bg-tertiary)',
@@ -248,10 +326,18 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    transition: 'all var(--transition-fast)',
   },
   mainContent: {
     flexGrow: 1,
-    padding: '10px 10px 40px',
+    padding: '28px 32px 48px',
+  },
+  centerLoading: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100vh',
+    background: 'var(--bg-primary)',
   },
 };
 

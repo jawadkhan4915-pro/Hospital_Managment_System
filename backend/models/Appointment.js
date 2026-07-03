@@ -42,6 +42,11 @@ const appointmentSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    roomNumber: {
+      type: String,
+      default: 'Room 101',
+      trim: true,
+    },
     isDeleted: {
       type: Boolean,
       default: false,
@@ -55,6 +60,11 @@ const appointmentSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+appointmentSchema.index({ patientId: 1, isDeleted: 1 });
+appointmentSchema.index({ doctorId: 1, isDeleted: 1 });
+appointmentSchema.index({ status: 1 });
+appointmentSchema.index({ date: -1 });
 
 const Appointment = mongoose.model('Appointment', appointmentSchema);
 export default Appointment;

@@ -1,19 +1,24 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
-import { Users, UserCheck, CalendarDays, DollarSign, AlertCircle, Plus } from 'lucide-react';
+import { useToast } from '../context/ToastContext.jsx';
+import { SkeletonCard, SkeletonTable } from '../components/SkeletonLoader.jsx';
+import { Users, UserCheck, CalendarDays, AlertCircle, Plus, Search, Filter } from 'lucide-react';
 
 const AdminDashboard = () => {
   const { fetchWithAuth } = useContext(AuthContext);
+  const { showSuccess, showError } = useToast();
+
   const [stats, setStats] = useState({
     staffCount: 0,
     patientCount: 0,
     appointmentCount: 0,
     lowStockCount: 0,
   });
-  const [users, setUsers] = useState([]);
   const [doctors, setDoctors] = useState([]);
-  
-  // Register Staff Form state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('All');
+  const [loading, setLoading] = useState(true);
+
   const [newStaffUser, setNewStaffUser] = useState({
     name: '',
     email: '',
@@ -25,40 +30,36 @@ const AdminDashboard = () => {
     salary: 5000,
   });
 
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     loadDashboardData();
   }, []);
 
   const loadDashboardData = async () => {
     try {
-      // 1. Fetch Patients
-      const patientsRes = await fetchWithAuth('/api/v1/patients');
-      const patientsData = await patientsRes.json();
-      
-      // 2. Fetch Doctors
-      const doctorsRes = await fetchWithAuth('/api/v1/staff/doctors');
-      const doctorsData = await doctorsRes.json();
+      setLoading(true);
+      const [patientsRes, doctorsRes, apptsRes, stockRes] = await Promise.all([
+        fetchWithAuth('/api/v1/patients'),
+        fetchWithAuth('/api/v1/staff/doctors'),
+        fetchWithAuth('/api/v1/appointments'),
+        fetchWithAuth('/api/v1/inventory/low-stock'),
+      ]);
 
-      // 3. Fetch Appointments
-      const apptsRes = await fetchWithAuth('/api/v1/appointments');
-      const apptsData = await apptsRes.json();
-
-      // 4. Fetch Low Stock
-      const stockRes = await fetchWithAuth('/api/v1/inventory/low-stock');
-      const stockData = await stockRes.json();
+      const [patientsData, doctorsData, apptsData, stockData] = await Promise.all([
+        patientsRes.json(),
+        doctorsRes.json(),
+        apptsRes.json(),
+        stockRes.json(),
+      ]);
 
       setDoctors(doctorsData.data || []);
       setStats({
-        staffCount: (doctorsData.data || []).length + 2, // adding sample administrative counts
+        staffCount: (doctorsData.data || []).length + 2,
         patientCount: (patientsData.data || []).length,
         appointmentCount: (apptsData.data || []).length,
         lowStockCount: (stockData.data || []).length,
       });
     } catch (e) {
-      console.error(e);
+      showError('Failed to load administrative analytics');
     } finally {
       setLoading(false);
     }
@@ -66,9 +67,7 @@ const AdminDashboard = () => {
 
   const handleRegisterStaff = async (e) => {
     e.preventDefault();
-    setMessage('');
     try {
-      // Step A: Create User Account
       const userRes = await fetch('/api/v1/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -80,11 +79,8 @@ const AdminDashboard = () => {
         }),
       });
       const userData = await userRes.json();
-      if (!userRes.ok) {
-        throw new Error(userData.message || 'Failed to register staff account');
-      }
+      if (!userRes.ok) throw new Error(userData.message || 'Failed to create user');
 
-      // Step B: Create Staff profile
       const staffRes = await fetchWithAuth('/api/v1/staff', {
         method: 'POST',
         body: JSON.stringify({
@@ -100,11 +96,9 @@ const AdminDashboard = () => {
         }),
       });
       const staffData = await staffRes.json();
-      if (!staffRes.ok) {
-        throw new Error(staffData.message || 'Failed to initialize staff profile');
-      }
+      if (!staffRes.ok) throw new Error(staffData.message || 'Failed to create staff profile');
 
-      setMessage('Staff member successfully registered!');
+      showSuccess(`Staff profile for ${newStaffUser.name} created successfully!`);
       setNewStaffUser({
         name: '',
         email: '',
@@ -117,91 +111,133 @@ const AdminDashboard = () => {
       });
       loadDashboardData();
     } catch (error) {
-      setMessage(`Error: ${error.message}`);
+      showError(error.message);
     }
   };
 
-  if (loading) return <div style={{ padding: '40px', color: 'var(--text-primary)' }}>Loading administrative hub...</div>;
+  const filteredDoctors = useMemo(() => {
+    return doctors.filter((doc) => {
+      const name = doc.userId?.name || '';
+      const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.specialization?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.staffId?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesDept = departmentFilter === 'All' || doc.department === departmentFilter;
+      return matchesSearch && matchesDept;
+    });
+  }, [doctors, searchQuery, departmentFilter]);
+
+  const departmentsList = useMemo(() => {
+    const depts = new Set(doctors.map((d) => d.department).filter(Boolean));
+    return ['All', ...Array.from(depts)];
+  }, [doctors]);
+
+  if (loading) {
+    return (
+      <div>
+        <h2 style={{ marginBottom: '24px' }}>Administrative Command Center</h2>
+        <SkeletonCard count={4} />
+        <div style={{ marginTop: '24px' }}>
+          <SkeletonTable rows={4} cols={5} />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={styles.container}>
-      <h2 style={{ marginBottom: '24px' }}>Administrative Command Center</h2>
+    <div className="animate-fade-in" style={styles.container}>
+      <div style={styles.headerRow}>
+        <div>
+          <h2>Administrative Command Center</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
+            System Analytics & Personnel Governance
+          </p>
+        </div>
+      </div>
 
       {/* Metrics Row */}
       <div style={styles.metricsGrid}>
-        <div className="glass" style={styles.metricCard}>
-          <div style={styles.iconBox}><Users size={24} color="var(--color-primary)" /></div>
+        <div className="stat-card">
           <div>
             <div style={styles.metricValue}>{stats.patientCount}</div>
-            <div style={styles.metricLabel}>Total Patients</div>
+            <div style={styles.metricLabel}>Registered Patients</div>
+          </div>
+          <div className="stat-icon-wrapper">
+            <Users size={24} />
           </div>
         </div>
 
-        <div className="glass" style={styles.metricCard}>
-          <div style={styles.iconBox}><UserCheck size={24} color="var(--color-success)" /></div>
+        <div className="stat-card">
           <div>
             <div style={styles.metricValue}>{stats.staffCount}</div>
-            <div style={styles.metricLabel}>Active Staff</div>
+            <div style={styles.metricLabel}>Active Personnel</div>
+          </div>
+          <div className="stat-icon-wrapper" style={{ background: 'var(--color-success-light)', color: 'var(--color-success)' }}>
+            <UserCheck size={24} />
           </div>
         </div>
 
-        <div className="glass" style={styles.metricCard}>
-          <div style={styles.iconBox}><CalendarDays size={24} color="var(--color-warning)" /></div>
+        <div className="stat-card">
           <div>
             <div style={styles.metricValue}>{stats.appointmentCount}</div>
-            <div style={styles.metricLabel}>Booked Sessions</div>
+            <div style={styles.metricLabel}>Scheduled Consultations</div>
+          </div>
+          <div className="stat-icon-wrapper" style={{ background: 'var(--color-warning-light)', color: 'var(--color-warning)' }}>
+            <CalendarDays size={24} />
           </div>
         </div>
 
-        <div className="glass" style={styles.metricCard}>
-          <div style={styles.iconBox}><AlertCircle size={24} color="var(--color-danger)" /></div>
+        <div className="stat-card">
           <div>
             <div style={styles.metricValue}>{stats.lowStockCount}</div>
-            <div style={styles.metricLabel}>Low Stock Items</div>
+            <div style={styles.metricLabel}>Inventory Alerts</div>
+          </div>
+          <div className="stat-icon-wrapper" style={{ background: 'var(--color-danger-light)', color: 'var(--color-danger)' }}>
+            <AlertCircle size={24} />
           </div>
         </div>
       </div>
 
       <div style={styles.contentGrid}>
-        {/* Register Staff Card */}
-        <div className="glass" style={styles.card}>
-          <h3 style={styles.cardTitle}>Register New Hospital Personnel</h3>
-          {message && (
-            <div style={message.includes('Error') ? styles.errorBox : styles.successBox}>
-              {message}
-            </div>
-          )}
+        {/* Register Staff Form */}
+        <div className="card">
+          <h3 style={styles.cardTitle}>Provision Hospital Staff</h3>
           <form onSubmit={handleRegisterStaff} style={styles.form}>
             <div className="form-group">
               <label className="form-label">Full Name</label>
               <input
                 type="text"
                 className="form-control"
+                placeholder="Dr. Alexander Fleming"
                 value={newStaffUser.name}
                 onChange={(e) => setNewStaffUser({ ...newStaffUser, name: e.target.value })}
                 required
               />
             </div>
-            <div className="form-group">
-              <label className="form-label">Email</label>
-              <input
-                type="email"
-                className="form-control"
-                value={newStaffUser.email}
-                onChange={(e) => setNewStaffUser({ ...newStaffUser, email: e.target.value })}
-                required
-              />
+            <div style={styles.formRow}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label className="form-label">Email</label>
+                <input
+                  type="email"
+                  className="form-control"
+                  placeholder="alexander@hospital.com"
+                  value={newStaffUser.email}
+                  onChange={(e) => setNewStaffUser({ ...newStaffUser, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label className="form-label">Password</label>
+                <input
+                  type="password"
+                  className="form-control"
+                  placeholder="••••••••"
+                  value={newStaffUser.password}
+                  onChange={(e) => setNewStaffUser({ ...newStaffUser, password: e.target.value })}
+                  required
+                />
+              </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">Password</label>
-              <input
-                type="password"
-                className="form-control"
-                value={newStaffUser.password}
-                onChange={(e) => setNewStaffUser({ ...newStaffUser, password: e.target.value })}
-                required
-              />
-            </div>
+
             <div style={styles.formRow}>
               <div className="form-group" style={{ flex: 1 }}>
                 <label className="form-label">Staff Role</label>
@@ -236,7 +272,7 @@ const AdminDashboard = () => {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="e.g. Pediatric Surgeon"
+                  placeholder="Cardiovascular Surgery"
                   value={newStaffUser.specialization}
                   onChange={(e) => setNewStaffUser({ ...newStaffUser, specialization: e.target.value })}
                   required
@@ -268,20 +304,46 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-              <Plus size={18} /> Provision Profile
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }}>
+              <Plus size={18} /> Provision Account Profile
             </button>
           </form>
         </div>
 
-        {/* Staff Directories List */}
-        <div className="glass" style={styles.card}>
-          <h3 style={styles.cardTitle}>Registered Medical Doctors</h3>
+        {/* Doctors Directory Table */}
+        <div className="card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+            <h3 style={styles.cardTitle}>Medical Specialists Directory</h3>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Search doctor..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ paddingLeft: '36px', height: '38px', fontSize: '0.875rem' }}
+                />
+              </div>
+              <select
+                className="form-control"
+                value={departmentFilter}
+                onChange={(e) => setDepartmentFilter(e.target.value)}
+                style={{ height: '38px', fontSize: '0.875rem' }}
+              >
+                {departmentsList.map((dept) => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div className="table-container">
             <table>
               <thead>
                 <tr>
-                  <th>Doctor ID</th>
+                  <th>Staff ID</th>
                   <th>Name</th>
                   <th>Department</th>
                   <th>Specialization</th>
@@ -289,22 +351,22 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {doctors.length === 0 ? (
+                {filteredDoctors.length === 0 ? (
                   <tr>
-                    <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
-                      No doctor records registered.
+                    <td colSpan="5" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>
+                      No doctor records matched your criteria.
                     </td>
                   </tr>
                 ) : (
-                  doctors.map((doc) => (
+                  filteredDoctors.map((doc) => (
                     <tr key={doc._id}>
-                      <td><span style={{ fontWeight: 600 }}>{doc.staffId}</span></td>
-                      <td>{doc.userId?.name || 'Registered User'}</td>
+                      <td><span style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{doc.staffId}</span></td>
+                      <td style={{ fontWeight: 600 }}>{doc.userId?.name || 'Dr. Practitioner'}</td>
                       <td>{doc.department}</td>
-                      <td>{doc.specialization}</td>
+                      <td>{doc.specialization || 'General'}</td>
                       <td>
                         <span className={`badge ${doc.status === 'Active' ? 'badge-success' : 'badge-warning'}`}>
-                          {doc.status}
+                          {doc.status || 'Active'}
                         </span>
                       </td>
                     </tr>
@@ -321,55 +383,37 @@ const AdminDashboard = () => {
 
 const styles = {
   container: {
-    padding: '30px',
-    animation: 'fadeIn 0.5s ease-out',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
+  },
+  headerRow: {
+    marginBottom: '8px',
   },
   metricsGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
     gap: '20px',
-    marginBottom: '30px',
-  },
-  metricCard: {
-    padding: '24px',
-    borderRadius: 'var(--border-radius-md)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '20px',
-    boxShadow: 'var(--box-shadow-sm)',
-  },
-  iconBox: {
-    width: '48px',
-    height: '48px',
-    borderRadius: 'var(--border-radius-sm)',
-    backgroundColor: 'var(--bg-tertiary)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   metricValue: {
     fontSize: '1.75rem',
-    fontWeight: '700',
+    fontWeight: '800',
     color: 'var(--text-primary)',
+    lineHeight: 1.2,
   },
   metricLabel: {
     fontSize: '0.85rem',
     color: 'var(--text-secondary)',
+    marginTop: '2px',
   },
   contentGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))',
-    gap: '30px',
-  },
-  card: {
-    padding: '30px',
-    borderRadius: 'var(--border-radius-md)',
-    boxShadow: 'var(--box-shadow-md)',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))',
+    gap: '24px',
   },
   cardTitle: {
-    fontSize: '1.25rem',
-    marginBottom: '20px',
-    color: 'var(--text-primary)',
+    fontSize: '1.15rem',
+    fontWeight: '700',
   },
   form: {
     display: 'flex',
@@ -377,25 +421,7 @@ const styles = {
   },
   formRow: {
     display: 'flex',
-    gap: '15px',
-  },
-  successBox: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    color: 'var(--color-success)',
-    padding: '12px',
-    borderRadius: 'var(--border-radius-sm)',
-    marginBottom: '20px',
-    fontSize: '0.9rem',
-    border: '1px solid rgba(16, 185, 129, 0.2)',
-  },
-  errorBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    color: 'var(--color-danger)',
-    padding: '12px',
-    borderRadius: 'var(--border-radius-sm)',
-    marginBottom: '20px',
-    fontSize: '0.9rem',
-    border: '1px solid rgba(239, 68, 68, 0.2)',
+    gap: '14px',
   },
 };
 

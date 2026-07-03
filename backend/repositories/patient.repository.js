@@ -13,6 +13,10 @@ class PatientRepository extends BaseRepository {
   async findByUserId(userId) {
     return this.findOne({ userId });
   }
+
+  async findByCnic(cnic) {
+    return this.findOne({ cnic: cnic.trim() });
+  }
 }
 
 export default new PatientRepository();

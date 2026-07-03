@@ -7,7 +7,7 @@ class UserRepository extends BaseRepository {
   }
 
   async findByEmail(email) {
-    return this.findOne({ email });
+    return this.findOne({ email }, { lean: false });
   }
 }
 

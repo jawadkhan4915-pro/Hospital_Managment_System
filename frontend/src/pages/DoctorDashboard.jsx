@@ -1,9 +1,13 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
-import { Calendar, User, FileText, CheckCircle, FilePlus, Activity, Plus, Trash2 } from 'lucide-react';
+import { useToast } from '../context/ToastContext.jsx';
+import { SkeletonCard, SkeletonTable } from '../components/SkeletonLoader.jsx';
+import { Calendar, FileText, CheckCircle, FilePlus, Activity, Plus, Trash2, Clock } from 'lucide-react';
 
 const DoctorDashboard = () => {
   const { fetchWithAuth } = useContext(AuthContext);
+  const { showSuccess, showError, showInfo } = useToast();
+
   const [appointments, setAppointments] = useState([]);
   const [medicalRecords, setMedicalRecords] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -23,8 +27,8 @@ const DoctorDashboard = () => {
   const [medFreq, setMedFreq] = useState('');
   const [medDur, setMedDur] = useState('');
 
-  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadDoctorData();
@@ -32,15 +36,21 @@ const DoctorDashboard = () => {
 
   const loadDoctorData = async () => {
     try {
-      const apptRes = await fetchWithAuth('/api/v1/appointments');
-      const apptData = await apptRes.json();
-      setAppointments(apptData.data || []);
+      setLoading(true);
+      const [apptRes, recordRes] = await Promise.all([
+        fetchWithAuth('/api/v1/appointments'),
+        fetchWithAuth('/api/v1/records'),
+      ]);
 
-      const recordRes = await fetchWithAuth('/api/v1/records');
-      const recordData = await recordRes.json();
+      const [apptData, recordData] = await Promise.all([
+        apptRes.json(),
+        recordRes.json(),
+      ]);
+
+      setAppointments(apptData.data || []);
       setMedicalRecords(recordData.data || []);
     } catch (e) {
-      console.error(e);
+      showError('Failed to load clinical schedule');
     } finally {
       setLoading(false);
     }
@@ -54,11 +64,14 @@ const DoctorDashboard = () => {
     setAssessment('');
     setPlan('');
     setPrescription([]);
-    setMessage('');
+    showInfo(`Selected consultation: ${appt.patientId?.name}`);
   };
 
   const handleAddMedication = () => {
-    if (!medName || !medDosage || !medFreq || !medDur) return;
+    if (!medName || !medDosage || !medFreq || !medDur) {
+      showError('Please complete all medication details');
+      return;
+    }
     setPrescription([...prescription, {
       medicineName: medName,
       dosage: medDosage,
@@ -78,10 +91,9 @@ const DoctorDashboard = () => {
   const handleSubmitEMR = async (e) => {
     e.preventDefault();
     if (!selectedAppointment) return;
-    setMessage('');
+    setSubmitting(true);
 
     try {
-      // Create Medical Record
       const recordRes = await fetchWithAuth('/api/v1/records', {
         method: 'POST',
         body: JSON.stringify({
@@ -94,22 +106,18 @@ const DoctorDashboard = () => {
         }),
       });
       const recordData = await recordRes.json();
-      if (!recordRes.ok) {
-        throw new Error(recordData.message || 'Failed to submit medical record');
-      }
+      if (!recordRes.ok) throw new Error(recordData.message || 'Failed to submit medical record');
 
-      // Update Appointment status to Completed
       await fetchWithAuth(`/api/v1/appointments/${selectedAppointment._id}/status`, {
         method: 'PUT',
         body: JSON.stringify({ status: 'Completed' }),
       });
 
-      // Generate invoice for patient (Consultation Fee, Prescription medicines fee)
       const billingItems = [
         { description: 'Physician Consultation Fee', quantity: 1, price: 150 },
       ];
       prescription.forEach((med) => {
-        billingItems.push({ description: `Prescription Medicine: ${med.medicineName}`, quantity: 1, price: 30 });
+        billingItems.push({ description: `Prescription: ${med.medicineName}`, quantity: 1, price: 30 });
       });
 
       await fetchWithAuth('/api/v1/billing/invoice', {
@@ -123,39 +131,64 @@ const DoctorDashboard = () => {
         }),
       });
 
-      setMessage('EMR submitted, appointment completed, and invoice generated successfully!');
+      showSuccess(`EMR & Invoice generated for ${selectedAppointment.patientId?.name}`);
       setSelectedAppointment(null);
       loadDoctorData();
     } catch (err) {
-      setMessage(`Error: ${err.message}`);
+      showError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  if (loading) return <div style={{ padding: '40px', color: 'var(--text-primary)' }}>Loading clinical interface...</div>;
+  const activeQueue = useMemo(() => {
+    return appointments.filter(a => a.status !== 'Completed' && a.status !== 'Cancelled');
+  }, [appointments]);
+
+  if (loading) {
+    return (
+      <div>
+        <h2 style={{ marginBottom: '24px' }}>Clinical Dashboard</h2>
+        <SkeletonCard count={3} />
+        <SkeletonTable rows={4} cols={5} />
+      </div>
+    );
+  }
 
   return (
-    <div style={styles.container}>
-      <h2 style={{ marginBottom: '24px' }}>Clinical Dashboard</h2>
+    <div className="animate-fade-in" style={styles.container}>
+      <div>
+        <h2>Clinical Practice Hub</h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
+          Electronic Health Records (EMR) & Patient Consultation Management
+        </p>
+      </div>
 
       <div style={styles.dashboardGrid}>
         {/* Appointment Queue */}
-        <div className="glass" style={styles.panel}>
-          <h3 style={styles.panelTitle}><Calendar size={20} color="var(--color-primary)" /> Daily Appointment Queue</h3>
+        <div className="card">
+          <h3 style={styles.panelTitle}>
+            <Calendar size={20} color="var(--color-primary)" /> Today's Patient Queue ({activeQueue.length})
+          </h3>
           <div style={styles.list}>
-            {appointments.filter(a => a.status !== 'Completed' && a.status !== 'Cancelled').length === 0 ? (
-              <div style={styles.empty}>No pending appointments today.</div>
+            {activeQueue.length === 0 ? (
+              <div className="empty-state">
+                <Clock size={36} className="empty-state-icon" />
+                <p>No pending appointments in queue.</p>
+              </div>
             ) : (
-              appointments.filter(a => a.status !== 'Completed' && a.status !== 'Cancelled').map((appt) => (
+              activeQueue.map((appt) => (
                 <div
                   key={appt._id}
                   style={{
                     ...styles.listItem,
                     borderColor: selectedAppointment?._id === appt._id ? 'var(--color-primary)' : 'var(--border-color)',
+                    background: selectedAppointment?._id === appt._id ? 'var(--color-primary-light)' : 'var(--bg-secondary)',
                   }}
                   onClick={() => handleSelectAppointment(appt)}
                 >
                   <div style={styles.apptInfo}>
-                    <span style={{ fontWeight: 600 }}>Queue #{appt.queueNumber} - {appt.patientId?.name}</span>
+                    <span style={{ fontWeight: 700 }}>Queue #{appt.queueNumber} - {appt.patientId?.name || 'Patient'}</span>
                     <span style={styles.timeLabel}>{appt.timeSlot}</span>
                   </div>
                   <div style={styles.apptDetails}>
@@ -169,20 +202,16 @@ const DoctorDashboard = () => {
         </div>
 
         {/* EMR SOAP form */}
-        <div className="glass" style={styles.panel}>
+        <div className="card">
           {selectedAppointment ? (
             <div>
-              <h3 style={styles.panelTitle}><FilePlus size={20} color="var(--color-success)" /> Consultation File: {selectedAppointment.patientId?.name}</h3>
-              {message && (
-                <div style={message.includes('Error') ? styles.errorBox : styles.successBox}>
-                  {message}
-                </div>
-              )}
+              <h3 style={styles.panelTitle}>
+                <FilePlus size={20} color="var(--color-success)" /> Consultation: {selectedAppointment.patientId?.name}
+              </h3>
               
-              {/* Quick vitals reference */}
               {selectedAppointment.patientId?.vitals?.length > 0 && (
                 <div style={styles.vitalsRef}>
-                  <h4 style={{ fontSize: '0.85rem', marginBottom: '8px', color: 'var(--text-secondary)' }}>Latest Patient Vitals:</h4>
+                  <h4 style={{ fontSize: '0.825rem', marginBottom: '8px', color: 'var(--text-secondary)' }}>Latest Patient Vitals:</h4>
                   {(() => {
                     const latest = selectedAppointment.patientId.vitals[selectedAppointment.patientId.vitals.length - 1];
                     return (
@@ -203,7 +232,7 @@ const DoctorDashboard = () => {
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="e.g. Acute Pharyngitis"
+                    placeholder="e.g. Acute Upper Respiratory Infection"
                     value={diagnosis}
                     onChange={(e) => setDiagnosis(e.target.value)}
                     required
@@ -212,46 +241,49 @@ const DoctorDashboard = () => {
 
                 <div style={styles.soapSection}>
                   <div className="form-group">
-                    <label className="form-label">Subjective (Symptoms, patient story)</label>
+                    <label className="form-label">Subjective (Symptoms)</label>
                     <textarea
                       className="form-control"
                       rows="2"
+                      placeholder="Patient reports fever and throat irritation..."
                       value={subjective}
                       onChange={(e) => setSubjective(e.target.value)}
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Objective (Clinical tests, physical signs)</label>
+                    <label className="form-label">Objective (Clinical Examination)</label>
                     <textarea
                       className="form-control"
                       rows="2"
+                      placeholder="Pharyngeal erythema observed..."
                       value={objective}
                       onChange={(e) => setObjective(e.target.value)}
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Assessment (Analysis, differential diagnosis)</label>
+                    <label className="form-label">Assessment</label>
                     <textarea
                       className="form-control"
                       rows="2"
+                      placeholder="Mild viral infection..."
                       value={assessment}
                       onChange={(e) => setAssessment(e.target.value)}
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Plan (Therapeutic, diagnostics, followup)</label>
+                    <label className="form-label">Treatment Plan</label>
                     <textarea
                       className="form-control"
                       rows="2"
+                      placeholder="Hydration, rest, 5-day medication course..."
                       value={plan}
                       onChange={(e) => setPlan(e.target.value)}
                     />
                   </div>
                 </div>
 
-                {/* Prescription Editor */}
                 <div style={styles.prescriptionSection}>
-                  <h4 style={{ fontSize: '0.95rem', marginBottom: '12px' }}>Add Medications</h4>
+                  <h4 style={{ fontSize: '0.95rem', marginBottom: '12px', fontWeight: '700' }}>Prescribe Medications</h4>
                   <div style={styles.prescriptionFields}>
                     <input
                       type="text"
@@ -264,7 +296,7 @@ const DoctorDashboard = () => {
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Dosage (e.g. 500mg)"
+                      placeholder="Dosage (500mg)"
                       value={medDosage}
                       onChange={(e) => setMedDosage(e.target.value)}
                       style={{ flex: 1 }}
@@ -272,7 +304,7 @@ const DoctorDashboard = () => {
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Freq (e.g. 1-0-1)"
+                      placeholder="Freq (1-0-1)"
                       value={medFreq}
                       onChange={(e) => setMedFreq(e.target.value)}
                       style={{ flex: 1 }}
@@ -286,7 +318,7 @@ const DoctorDashboard = () => {
                       style={{ flex: 1 }}
                     />
                     <button type="button" onClick={handleAddMedication} className="btn btn-secondary">
-                      <Plus size={16} />
+                      <Plus size={16} /> Add
                     </button>
                   </div>
 
@@ -309,53 +341,58 @@ const DoctorDashboard = () => {
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Type name to sign digitally"
+                    placeholder="Sign your full name digitally"
                     value={signature}
                     onChange={(e) => setSignature(e.target.value)}
                     required
                   />
                 </div>
 
-                <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }}>
-                  <CheckCircle size={18} /> Complete Session & Submit EMR
+                <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }} disabled={submitting}>
+                  <CheckCircle size={18} /> {submitting ? 'Submitting EMR...' : 'Complete Session & Issue EMR'}
                 </button>
               </form>
             </div>
           ) : (
-            <div style={styles.noApptSelected}>
-              <Activity size={48} color="var(--text-tertiary)" />
-              <p>Select a patient from the queue to start consult file</p>
+            <div className="empty-state">
+              <Activity size={48} className="empty-state-icon" />
+              <h4>Select a Patient from Queue</h4>
+              <p style={{ fontSize: '0.875rem' }}>Click on any patient card in the queue to begin recording consultation notes and prescriptions.</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Historical Records */}
-      <div className="glass" style={{ ...styles.panel, marginTop: '30px' }}>
-        <h3 style={styles.panelTitle}><FileText size={20} color="var(--color-primary)" /> Hospital Medical Consultation Log</h3>
-        <div className="table-container" style={{ marginTop: '15px' }}>
+      <div className="card">
+        <h3 style={styles.panelTitle}>
+          <FileText size={20} color="var(--color-primary)" /> Clinical EMR History Log
+        </h3>
+        <div className="table-container" style={{ marginTop: '16px' }}>
           <table>
             <thead>
               <tr>
-                <th>Patient</th>
+                <th>Patient Name</th>
                 <th>Diagnosis</th>
-                <th>Prescribed Items</th>
-                <th>Signed By</th>
-                <th>Date</th>
+                <th>Prescribed Medications</th>
+                <th>Digital Signature</th>
+                <th>Consult Date</th>
               </tr>
             </thead>
             <tbody>
               {medicalRecords.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No EMR history matches.</td>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>
+                    No consultation records found.
+                  </td>
                 </tr>
               ) : (
                 medicalRecords.map((rec) => (
                   <tr key={rec._id}>
-                    <td>{rec.patientId?.name || 'Walk-In'}</td>
-                    <td><span style={{ fontWeight: 600 }}>{rec.diagnosis}</span></td>
+                    <td style={{ fontWeight: 600 }}>{rec.patientId?.name || 'Patient'}</td>
+                    <td><span className="badge badge-primary">{rec.diagnosis}</span></td>
                     <td>
-                      {rec.prescription.map(p => `${p.medicineName} (${p.dosage})`).join(', ') || 'None'}
+                      {rec.prescription?.map(p => `${p.medicineName} (${p.dosage})`).join(', ') || 'None'}
                     </td>
                     <td>{rec.digitalSignature}</td>
                     <td>{new Date(rec.createdAt).toLocaleDateString()}</td>
@@ -372,23 +409,19 @@ const DoctorDashboard = () => {
 
 const styles = {
   container: {
-    padding: '30px',
-    animation: 'fadeIn 0.5s ease-out',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
   },
   dashboardGrid: {
     display: 'grid',
     gridTemplateColumns: '1fr 2fr',
-    gap: '30px',
-  },
-  panel: {
-    padding: '30px',
-    borderRadius: 'var(--border-radius-md)',
-    boxShadow: 'var(--box-shadow-md)',
+    gap: '24px',
   },
   panelTitle: {
-    fontSize: '1.25rem',
-    marginBottom: '20px',
-    color: 'var(--text-primary)',
+    fontSize: '1.15rem',
+    fontWeight: '700',
+    marginBottom: '16px',
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
@@ -396,49 +429,35 @@ const styles = {
   list: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '15px',
+    gap: '12px',
   },
   listItem: {
     padding: '16px',
     borderRadius: 'var(--border-radius-sm)',
     border: '1px solid var(--border-color)',
-    background: 'var(--bg-secondary)',
     cursor: 'pointer',
-    transition: 'all 0.3s',
+    transition: 'all var(--transition-fast)',
   },
   apptInfo: {
     display: 'flex',
     justifyContent: 'space-between',
-    marginBottom: '8px',
+    marginBottom: '6px',
   },
   timeLabel: {
     fontSize: '0.85rem',
     color: 'var(--color-primary)',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   apptDetails: {
     display: 'flex',
     justifyContent: 'space-between',
+    alignItems: 'center',
     fontSize: '0.85rem',
     color: 'var(--text-secondary)',
   },
-  empty: {
-    textAlign: 'center',
-    color: 'var(--text-tertiary)',
-    padding: '30px 0',
-  },
-  noApptSelected: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '400px',
-    color: 'var(--text-tertiary)',
-    gap: '15px',
-  },
   vitalsRef: {
     backgroundColor: 'var(--bg-tertiary)',
-    padding: '15px',
+    padding: '14px',
     borderRadius: 'var(--border-radius-sm)',
     marginBottom: '20px',
     borderLeft: '4px solid var(--color-primary)',
@@ -452,22 +471,21 @@ const styles = {
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '15px',
+    gap: '16px',
   },
   soapSection: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '15px',
+    gap: '14px',
   },
   prescriptionSection: {
     borderTop: '1px solid var(--border-color)',
-    paddingTop: '20px',
-    marginTop: '10px',
+    paddingTop: '16px',
   },
   prescriptionFields: {
     display: 'flex',
     gap: '10px',
-    marginBottom: '15px',
+    marginBottom: '12px',
   },
   prescriptionList: {
     display: 'flex',
@@ -479,33 +497,15 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: 'var(--bg-tertiary)',
-    padding: '8px 16px',
+    padding: '8px 14px',
     borderRadius: 'var(--border-radius-sm)',
-    fontSize: '0.9rem',
+    fontSize: '0.875rem',
   },
   delBtn: {
     background: 'none',
     border: 'none',
     color: 'var(--color-danger)',
     cursor: 'pointer',
-  },
-  successBox: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    color: 'var(--color-success)',
-    padding: '12px',
-    borderRadius: 'var(--border-radius-sm)',
-    marginBottom: '20px',
-    fontSize: '0.9rem',
-    border: '1px solid rgba(16, 185, 129, 0.2)',
-  },
-  errorBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    color: 'var(--color-danger)',
-    padding: '12px',
-    borderRadius: 'var(--border-radius-sm)',
-    marginBottom: '20px',
-    fontSize: '0.9rem',
-    border: '1px solid rgba(239, 68, 68, 0.2)',
   },
 };
 

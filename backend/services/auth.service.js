@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import userRepository from '../repositories/user.repository.js';
 import logger from '../config/logger.js';
 
@@ -31,7 +32,10 @@ class AuthService {
       throw new Error('Invalid email or password');
     }
 
-    const isMatch = await user.comparePassword(password);
+    const isMatch = typeof user.comparePassword === 'function' 
+      ? await user.comparePassword(password) 
+      : await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
       throw new Error('Invalid email or password');
     }

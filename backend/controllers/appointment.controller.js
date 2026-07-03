@@ -4,7 +4,7 @@ import staffService from '../services/staff.service.js';
 
 export const bookAppointment = async (req, res, next) => {
   try {
-    let { patientId, doctorId, date, timeSlot, type, reason } = req.body;
+    let { patientId, doctorId, date, timeSlot, type, reason, roomNumber } = req.body;
 
     // If client is a Patient, map their userId to patientId
     if (req.user.role === 'Patient') {
@@ -27,7 +27,8 @@ export const bookAppointment = async (req, res, next) => {
       date,
       timeSlot,
       type,
-      reason
+      reason,
+      roomNumber
     );
 
     res.status(201).json({ success: true, data: appointment });

@@ -1,7 +1,8 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
 import { ThemeContext } from '../context/ThemeContext.jsx';
-import { Shield, Eye, EyeOff, KeyRound, Mail, UserPlus, LogIn, Sun, Moon, Zap } from 'lucide-react';
+import { useToast } from '../context/ToastContext.jsx';
+import { Shield, Eye, EyeOff, KeyRound, Mail, UserPlus, LogIn, Sun, Moon, Zap, Activity } from 'lucide-react';
 
 const DEMO_ACCOUNTS = [
   { role: 'Admin',      email: 'admin@hospital.com',    password: 'admin123',    color: '#7c3aed', bg: 'rgba(124,58,237,0.12)'  },
@@ -14,40 +15,36 @@ const DEMO_ACCOUNTS = [
 const AuthPage = () => {
   const { login, verifyMfaCode } = useContext(AuthContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
+  const { showSuccess, showError, showInfo } = useToast();
   
   const [isRegistering, setIsRegistering] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
-  // Login/Registration form state
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('Patient'); // default to patient for self-signups
+  const [role, setRole] = useState('Patient');
   
-  // MFA states
   const [mfaRequired, setMfaRequired] = useState(false);
   const [mfaUserId, setMfaUserId] = useState(null);
   const [mfaCode, setMfaCode] = useState('');
-
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [mfaInfo, setMfaInfo] = useState('');
 
   const fillDemo = (account) => {
     setEmail(account.email);
     setPassword(account.password);
     setIsRegistering(false);
-    setError('');
+    showInfo(`Auto-filled ${account.role} credentials!`);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
       if (mfaRequired) {
         await verifyMfaCode(mfaUserId, mfaCode);
+        showSuccess('MFA Verification Successful!');
       } else if (isRegistering) {
         const res = await fetch('/api/v1/auth/register', {
           method: 'POST',
@@ -58,20 +55,21 @@ const AuthPage = () => {
         if (!res.ok) {
           throw new Error(data.message || 'Registration failed');
         }
-        // Switch to login
         setIsRegistering(false);
         setPassword('');
-        setError('Registration successful! Please login.');
+        showSuccess('Registration successful! Please login to continue.');
       } else {
         const result = await login(email, password);
         if (result && result.requireMfa) {
           setMfaRequired(true);
           setMfaUserId(result.userId);
-          setMfaInfo('For testing, simulated MFA is enabled. Enter: 123456');
+          showInfo('MFA enabled. Demo code: 123456');
+        } else {
+          showSuccess('Welcome back! Logging in...');
         }
       }
     } catch (err) {
-      setError(err.message || 'Something went wrong');
+      showError(err.message || 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -79,41 +77,37 @@ const AuthPage = () => {
 
   return (
     <div style={styles.container}>
-      {/* Theme Toggle Button */}
-      <button onClick={toggleTheme} style={styles.themeToggle}>
+      {/* Theme Toggle */}
+      <button onClick={toggleTheme} style={styles.themeToggle} title="Toggle Dark/Light Mode">
         {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
       </button>
 
-      <div className="glass" style={styles.card}>
+      <div className="glass animate-fade-in" style={styles.card}>
         <div style={styles.header}>
           <div style={styles.logoContainer}>
-            <Shield size={32} color="var(--color-primary)" />
+            <Activity size={32} color="#ffffff" />
           </div>
           <h2 style={styles.title}>Enterprise HMS</h2>
-          <p style={styles.subtitle}>Hospital Information & Administration System</p>
+          <p style={styles.subtitle}>Smart Healthcare Management System</p>
         </div>
-
-        {error && (
-          <div style={error.includes('successful') ? styles.successBox : styles.errorBox}>
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} style={styles.form}>
           {mfaRequired ? (
             <>
               <div style={styles.mfaInstruction}>
-                <p>MFA is enabled on this account.</p>
-                <p style={{ fontSize: '0.85rem', color: 'var(--color-warning)' }}>{mfaInfo}</p>
+                <p>Multi-Factor Authentication Required</p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-warning)', marginTop: '4px' }}>
+                  Enter code: 123456
+                </p>
               </div>
               <div className="form-group">
-                <label className="form-label">Enter One-Time Password</label>
+                <label className="form-label">One-Time Security Code</label>
                 <div style={styles.inputWrapper}>
                   <KeyRound size={18} style={styles.inputIcon} />
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Enter Code"
+                    placeholder="Enter 6-digit code"
                     value={mfaCode}
                     onChange={(e) => setMfaCode(e.target.value)}
                     required
@@ -132,7 +126,7 @@ const AuthPage = () => {
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="John Doe"
+                      placeholder="e.g. Dr. Sarah Connor"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
@@ -190,7 +184,7 @@ const AuthPage = () => {
                     onChange={(e) => setRole(e.target.value)}
                     style={{ width: '100%' }}
                   >
-                    <option value="Patient">Patient (Self Portal)</option>
+                    <option value="Patient">Patient (Portal Access)</option>
                     <option value="Admin">Administrator</option>
                     <option value="Doctor">Medical Doctor</option>
                     <option value="Nurse">Clinic Nurse</option>
@@ -205,18 +199,18 @@ const AuthPage = () => {
 
           <button type="submit" className="btn btn-primary" style={styles.submitBtn} disabled={loading}>
             {loading ? (
-              'Processing...'
+              'Authenticating...'
             ) : mfaRequired ? (
               <>
-                <LogIn size={18} /> Verify & Log In
+                <LogIn size={18} /> Verify Code
               </>
             ) : isRegistering ? (
               <>
-                <UserPlus size={18} /> Register Account
+                <UserPlus size={18} /> Create Account
               </>
             ) : (
               <>
-                <LogIn size={18} /> Access System
+                <LogIn size={18} /> Access Portal
               </>
             )}
           </button>
@@ -225,25 +219,21 @@ const AuthPage = () => {
         {!mfaRequired && (
           <div style={styles.footer}>
             <button
-              onClick={() => {
-                setIsRegistering(!isRegistering);
-                setError('');
-              }}
+              onClick={() => setIsRegistering(!isRegistering)}
               style={styles.toggleBtn}
             >
-              {isRegistering ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+              {isRegistering ? 'Already have an account? Sign In' : "Don't have an account? Register Now"}
             </button>
           </div>
         )}
 
-        {/* Demo Accounts Panel */}
         {!mfaRequired && !isRegistering && (
           <div style={styles.demoPanel}>
             <div style={styles.demoDivider}>
               <span style={styles.demoDividerLine} />
               <span style={styles.demoDividerText}>
-                <Zap size={13} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
-                Quick Demo Access
+                <Zap size={13} style={{ marginRight: '5px' }} />
+                Instant Demo Portals
               </span>
               <span style={styles.demoDividerLine} />
             </div>
@@ -258,13 +248,11 @@ const AuthPage = () => {
                     backgroundColor: acc.bg,
                     color: acc.color,
                   }}
-                  title={`Fill: ${acc.email} / ${acc.password}`}
                 >
                   {acc.role}
                 </button>
               ))}
             </div>
-            <p style={styles.demoHint}>Click a role to auto-fill credentials, then press <strong>Access System</strong></p>
           </div>
         )}
       </div>
@@ -278,15 +266,14 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: '100vh',
-    padding: '20px',
+    padding: '24px',
     backgroundColor: 'var(--bg-primary)',
     position: 'relative',
-    transition: 'all 0.3s',
   },
   themeToggle: {
     position: 'absolute',
-    top: '30px',
-    right: '30px',
+    top: '28px',
+    right: '28px',
     background: 'var(--bg-secondary)',
     border: '1px solid var(--border-color)',
     borderRadius: '50%',
@@ -298,38 +285,39 @@ const styles = {
     justifyContent: 'center',
     color: 'var(--text-primary)',
     boxShadow: 'var(--box-shadow-sm)',
-    transition: 'all 0.3s',
   },
   card: {
     width: '100%',
-    maxWidth: '450px',
-    padding: '40px',
+    maxWidth: '460px',
+    padding: '40px 36px',
     borderRadius: 'var(--border-radius-lg)',
     boxShadow: 'var(--box-shadow-lg)',
-    animation: 'fadeIn 0.5s ease-out',
   },
   header: {
     textAlign: 'center',
-    marginBottom: '30px',
+    marginBottom: '32px',
   },
   logoContainer: {
-    width: '60px',
-    height: '60px',
-    borderRadius: 'var(--border-radius-md)',
-    backgroundColor: 'var(--color-primary-light)',
+    width: '64px',
+    height: '64px',
+    borderRadius: '18px',
+    background: 'var(--gradient-primary)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    margin: '0 auto 15px',
+    margin: '0 auto 16px',
+    boxShadow: '0 8px 20px rgba(37, 99, 235, 0.3)',
   },
   title: {
-    fontSize: '1.75rem',
+    fontSize: '1.8rem',
+    fontWeight: '800',
+    letterSpacing: '-0.03em',
     color: 'var(--text-primary)',
   },
   subtitle: {
-    fontSize: '0.85rem',
+    fontSize: '0.875rem',
     color: 'var(--text-secondary)',
-    marginTop: '5px',
+    marginTop: '4px',
   },
   form: {
     display: 'flex',
@@ -358,33 +346,13 @@ const styles = {
     cursor: 'pointer',
   },
   submitBtn: {
-    marginTop: '10px',
+    marginTop: '12px',
     width: '100%',
     padding: '14px',
     fontSize: '1rem',
   },
-  errorBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    color: 'var(--color-danger)',
-    padding: '12px',
-    borderRadius: 'var(--border-radius-sm)',
-    marginBottom: '20px',
-    fontSize: '0.9rem',
-    textAlign: 'center',
-    border: '1px solid rgba(239, 68, 68, 0.2)',
-  },
-  successBox: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    color: 'var(--color-success)',
-    padding: '12px',
-    borderRadius: 'var(--border-radius-sm)',
-    marginBottom: '20px',
-    fontSize: '0.9rem',
-    textAlign: 'center',
-    border: '1px solid rgba(16, 185, 129, 0.2)',
-  },
   footer: {
-    marginTop: '25px',
+    marginTop: '24px',
     textAlign: 'center',
   },
   toggleBtn: {
@@ -393,7 +361,7 @@ const styles = {
     color: 'var(--color-primary)',
     cursor: 'pointer',
     fontSize: '0.9rem',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   mfaInstruction: {
     textAlign: 'center',
@@ -409,7 +377,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    marginBottom: '14px',
+    marginBottom: '16px',
   },
   demoDividerLine: {
     flexGrow: 1,
@@ -422,13 +390,13 @@ const styles = {
     whiteSpace: 'nowrap',
     display: 'flex',
     alignItems: 'center',
+    fontWeight: '600',
   },
   demoGrid: {
     display: 'flex',
     flexWrap: 'wrap',
     gap: '8px',
     justifyContent: 'center',
-    marginBottom: '10px',
   },
   demoBtn: {
     padding: '6px 14px',
@@ -439,13 +407,6 @@ const styles = {
     fontWeight: '600',
     fontFamily: 'var(--font-family)',
     transition: 'all 0.2s',
-    letterSpacing: '0.02em',
-  },
-  demoHint: {
-    textAlign: 'center',
-    fontSize: '0.72rem',
-    color: 'var(--text-tertiary)',
-    margin: 0,
   },
 };
 

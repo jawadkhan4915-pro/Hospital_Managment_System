@@ -24,6 +24,14 @@ const patientSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    cnic: {
+      type: String,
+      trim: true,
+      sparse: true,
+      default: function () {
+        return `CNIC-${Math.floor(1000000000000 + Math.random() * 9000000000000)}`;
+      },
+    },
     name: {
       type: String,
       required: [true, 'Patient name is required'],
@@ -80,6 +88,9 @@ const patientSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+patientSchema.index({ cnic: 1 });
+patientSchema.index({ patientId: 1 });
 
 const Patient = mongoose.model('Patient', patientSchema);
 export default Patient;

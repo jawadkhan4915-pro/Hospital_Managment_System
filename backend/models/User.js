@@ -31,6 +31,7 @@ const userSchema = new mongoose.Schema(
         'Pharmacist',
         'LabTechnician',
         'Accountant',
+        'Receptionist',
       ],
       required: [true, 'Role is required'],
     },
@@ -60,6 +61,9 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+userSchema.index({ role: 1, isDeleted: 1 });
+userSchema.index({ status: 1 });
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {
