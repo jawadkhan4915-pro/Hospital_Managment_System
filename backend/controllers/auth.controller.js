@@ -24,6 +24,9 @@ export const login = async (req, res, next) => {
     const result = await authService.login(email, password);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
+    if (error.message === 'Invalid email or password') {
+      res.status(401);
+    }
     next(error);
   }
 };
@@ -38,6 +41,9 @@ export const verifyMfa = async (req, res, next) => {
     const result = await authService.verifyMfa(userId, code);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
+    if (error.message === 'Invalid MFA code' || error.message === 'User not found') {
+      res.status(401);
+    }
     next(error);
   }
 };

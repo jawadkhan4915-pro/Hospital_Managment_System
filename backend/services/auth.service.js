@@ -5,19 +5,20 @@ import logger from '../config/logger.js';
 
 class AuthService {
   async register(name, email, password, role) {
-    const existingUser = await userRepository.findByEmail(email);
+    const cleanEmail = email ? email.trim().toLowerCase() : '';
+    const existingUser = await userRepository.findByEmail(cleanEmail);
     if (existingUser) {
       throw new Error('Email is already registered');
     }
 
     const user = await userRepository.create({
-      name,
-      email,
+      name: name ? name.trim() : '',
+      email: cleanEmail,
       password,
       role,
     });
 
-    logger.info(`User registered: ${email} (${role})`);
+    logger.info(`User registered: ${cleanEmail} (${role})`);
     return {
       id: user._id,
       name: user.name,
@@ -27,7 +28,8 @@ class AuthService {
   }
 
   async login(email, password) {
-    const user = await userRepository.findByEmail(email);
+    const cleanEmail = email ? email.trim().toLowerCase() : '';
+    const user = await userRepository.findByEmail(cleanEmail);
     if (!user || user.status !== 'Active') {
       throw new Error('Invalid email or password');
     }

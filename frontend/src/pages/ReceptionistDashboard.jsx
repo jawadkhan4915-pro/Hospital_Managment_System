@@ -14,7 +14,7 @@ import {
   Users,
   CheckCircle,
   Clock,
-  IdCard,
+  CreditCard,
 } from 'lucide-react';
 
 const ReceptionistDashboard = () => {
@@ -215,7 +215,7 @@ const ReceptionistDashboard = () => {
       {/* CNIC Lookup Banner */}
       <div className="card" style={styles.lookupCard}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <IdCard size={24} color="var(--color-primary)" />
+          <CreditCard size={24} color="var(--color-primary)" />
           <div>
             <h3 style={{ fontSize: '1.05rem', margin: 0 }}>Patient CNIC Search & Medical Archive</h3>
             <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', margin: 0 }}>

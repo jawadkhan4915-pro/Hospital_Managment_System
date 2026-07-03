@@ -7,7 +7,9 @@ class UserRepository extends BaseRepository {
   }
 
   async findByEmail(email) {
-    return this.findOne({ email }, { lean: false });
+    if (!email) return null;
+    const cleanEmail = email.trim().toLowerCase();
+    return this.findOne({ email: cleanEmail });
   }
 }
 

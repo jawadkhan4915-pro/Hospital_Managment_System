@@ -89,8 +89,5 @@ const patientSchema = new mongoose.Schema(
   }
 );
 
-patientSchema.index({ cnic: 1 });
-patientSchema.index({ patientId: 1 });
-
 const Patient = mongoose.model('Patient', patientSchema);
 export default Patient;

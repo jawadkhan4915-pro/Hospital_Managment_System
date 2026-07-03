@@ -12,7 +12,7 @@ class BaseRepository {
     if (options.sort) query = query.sort(options.sort);
     if (options.limit) query = query.limit(options.limit);
     if (options.skip) query = query.skip(options.skip);
-    if (options.lean !== false) query = query.lean();
+    if (options.lean === true) query = query.lean();
 
     return query.exec();
   }
@@ -23,7 +23,7 @@ class BaseRepository {
 
     if (options.select) query = query.select(options.select);
     if (options.populate) query = query.populate(options.populate);
-    if (options.lean !== false) query = query.lean();
+    if (options.lean === true) query = query.lean();
 
     return query.exec();
   }
@@ -33,7 +33,7 @@ class BaseRepository {
 
     if (options.select) query = query.select(options.select);
     if (options.populate) query = query.populate(options.populate);
-    if (options.lean !== false) query = query.lean();
+    if (options.lean === true) query = query.lean();
 
     return query.exec();
   }

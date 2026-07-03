@@ -4,7 +4,7 @@ import { useToast } from '../context/ToastContext.jsx';
 import { SkeletonCard, SkeletonTable } from '../components/SkeletonLoader.jsx';
 import PrescriptionSlipModal from '../components/PrescriptionSlipModal.jsx';
 import PatientHistoryModal from '../components/PatientHistoryModal.jsx';
-import { Calendar, FileText, CheckCircle, FilePlus, Activity, Plus, Trash2, Clock, Search, History, IdCard } from 'lucide-react';
+import { Calendar, FileText, CheckCircle, FilePlus, Activity, Plus, Trash2, Clock, Search, History, CreditCard } from 'lucide-react';
 
 const DoctorDashboard = () => {
   const { fetchWithAuth } = useContext(AuthContext);
@@ -199,7 +199,7 @@ const DoctorDashboard = () => {
       {/* CNIC Lookup Banner for Doctors */}
       <div className="card" style={{ backgroundColor: 'var(--color-primary-light)', border: '1px solid rgba(37, 99, 235, 0.2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <IdCard size={22} color="var(--color-primary)" />
+          <CreditCard size={22} color="var(--color-primary)" />
           <div>
             <h4 style={{ margin: 0 }}>Patient CNIC History Lookup</h4>
             <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', margin: 0 }}>
@@ -227,7 +227,7 @@ const DoctorDashboard = () => {
 
       <div style={styles.dashboardGrid}>
         {/* Appointment Queue */}
-        <div className="card">
+        <div className="card" style={styles.queueCard}>
           <h3 style={styles.panelTitle}>
             <Calendar size={20} color="var(--color-primary)" /> Today's Patient Queue ({activeQueue.length})
           </h3>
@@ -263,7 +263,7 @@ const DoctorDashboard = () => {
         </div>
 
         {/* EMR SOAP form */}
-        <div className="card">
+        <div className="card" style={styles.consultationCard}>
           {selectedAppointment ? (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -517,6 +517,23 @@ const styles = {
     display: 'grid',
     gridTemplateColumns: '1fr 2fr',
     gap: '24px',
+    alignItems: 'start',
+  },
+  queueCard: {
+    maxHeight: 'calc(100vh - 210px)',
+    minHeight: '500px',
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    paddingRight: '10px',
+  },
+  consultationCard: {
+    maxHeight: 'calc(100vh - 210px)',
+    minHeight: '500px',
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    paddingRight: '10px',
   },
   panelTitle: {
     fontSize: '1.15rem',
