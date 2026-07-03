@@ -136,7 +136,11 @@ const AppContent = () => {
             <h1 style={styles.headerTitle}>Enterprise Hospital Management System</h1>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div className="badge badge-success" style={{ padding: '6px 14px', fontSize: '0.8rem' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-success)', display: 'inline-block', boxShadow: '0 0 8px var(--color-success)' }}></span>
+              System Operational
+            </div>
             <button onClick={toggleTheme} style={styles.themeBtn} title="Toggle Theme Mode">
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
