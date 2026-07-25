@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
+import { getApiUrl } from '../config/api.js';
 import { Shield, Eye, EyeOff, KeyRound, Mail, UserPlus, LogIn, Sun, Moon, Zap, Activity } from 'lucide-react';
 
 const DEMO_ACCOUNTS = [
@@ -47,12 +48,18 @@ const AuthPage = () => {
         await verifyMfaCode(mfaUserId, mfaCode);
         showSuccess('MFA Verification Successful!');
       } else if (isRegistering) {
-        const res = await fetch('/api/v1/auth/register', {
+        const res = await fetch(getApiUrl('/api/v1/auth/register'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, email, password, role }),
         });
-        const data = await res.json();
+        const resText = await res.text();
+        let data;
+        try {
+          data = JSON.parse(resText);
+        } catch {
+          throw new Error(!res.ok ? `Server Error (${res.status})` : 'Invalid response from server');
+        }
         if (!res.ok) {
           throw new Error(data.message || 'Registration failed');
         }

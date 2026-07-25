@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { getApiUrl } from '../config/api.js';
 
 export const AuthContext = createContext();
 
@@ -36,23 +37,37 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const safeJsonParse = async (res) => {
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      if (!res.ok) {
+        throw new Error(`Server Error (${res.status}): ${res.statusText || 'Unable to process request'}`);
+      }
+      throw new Error('Invalid response format received from server');
+    }
+  };
+
   const login = async (email, password) => {
-    const res = await fetch('/api/v1/auth/login', {
+    const res = await fetch(getApiUrl('/api/v1/auth/login'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await res.json();
+    const data = await safeJsonParse(res);
     if (!res.ok) {
       throw new Error(data.message || 'Login failed');
     }
 
-    if (data.data.requireMfa) {
+    if (data.data?.requireMfa) {
       return { requireMfa: true, userId: data.data.userId };
     }
 
-    const { token: receivedToken, user: loggedUser } = data.data;
+    const { token: receivedToken, user: loggedUser } = data.data || {};
+    if (!receivedToken) throw new Error('Invalid login response');
+
     localStorage.setItem('token', receivedToken);
     setToken(receivedToken);
     setUser(loggedUser);
@@ -60,18 +75,20 @@ export const AuthProvider = ({ children }) => {
   };
 
   const verifyMfaCode = async (userId, code) => {
-    const res = await fetch('/api/v1/auth/mfa/verify', {
+    const res = await fetch(getApiUrl('/api/v1/auth/mfa/verify'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, code }),
     });
 
-    const data = await res.json();
+    const data = await safeJsonParse(res);
     if (!res.ok) {
       throw new Error(data.message || 'MFA validation failed');
     }
 
-    const { token: receivedToken, user: loggedUser } = data.data;
+    const { token: receivedToken, user: loggedUser } = data.data || {};
+    if (!receivedToken) throw new Error('Invalid MFA response');
+
     localStorage.setItem('token', receivedToken);
     setToken(receivedToken);
     setUser(loggedUser);
@@ -92,7 +109,7 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    const response = await fetch(url, { ...options, headers });
+    const response = await fetch(getApiUrl(url), { ...options, headers });
     if (response.status === 401) {
       logout();
     }

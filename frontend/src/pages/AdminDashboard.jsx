@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
+import { getApiUrl } from '../config/api.js';
 import { SkeletonCard, SkeletonTable } from '../components/SkeletonLoader.jsx';
 import { Users, UserCheck, CalendarDays, AlertCircle, Plus, Search, Filter } from 'lucide-react';
 
@@ -68,7 +69,7 @@ const AdminDashboard = () => {
   const handleRegisterStaff = async (e) => {
     e.preventDefault();
     try {
-      const userRes = await fetch('/api/v1/auth/register', {
+      const userRes = await fetch(getApiUrl('/api/v1/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
