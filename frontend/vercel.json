@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://enterprise-hms-backend.onrender.com/api/:path*"
+      "destination": "https://hospital-managment-system-r0hh.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",
