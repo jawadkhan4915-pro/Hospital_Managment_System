@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CalendarCheck, QrCode, FileText, CreditCard, ShieldLock, LayoutDashboard, Sparkles } from 'lucide-react';
+import { CalendarCheck, QrCode, FileText, CreditCard, Lock, LayoutDashboard, Sparkles } from 'lucide-react';
 
 const FEATURES = [
   {
@@ -32,7 +32,7 @@ const FEATURES = [
     gradient: 'from-amber-500 to-orange-500',
   },
   {
-    icon: ShieldLock,
+    icon: Lock,
     title: 'Multi-Factor Authentication (MFA)',
     desc: 'Time-based OTP security layer. Protect sensitive medical data and prevent unauthorized administrative credential access.',
     tag: 'auth.middleware.js',
