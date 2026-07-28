@@ -30,15 +30,15 @@ const AppointmentSlipModal = ({ appointment, onClose }) => {
   });
 
   return (
-    <div style={styles.overlay}>
-      <div className="card animate-fade-in" style={styles.modalCard}>
+    <div className="modal-overlay-responsive">
+      <div className="modal-card-responsive animate-fade-in">
         <div style={styles.topBar}>
           <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Official Appointment Slip</h3>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button className="btn btn-primary btn-sm" onClick={handlePrint}>
-              <Printer size={16} /> Print Slip
+              <Printer size={16} /> <span className="hidden sm:inline">Print Slip</span>
             </button>
-            <button className="btn btn-secondary btn-sm" onClick={onClose}>
+            <button className="btn btn-secondary btn-sm" onClick={onClose} aria-label="Close">
               <X size={16} />
             </button>
           </div>
@@ -56,7 +56,7 @@ const AppointmentSlipModal = ({ appointment, onClose }) => {
             <div style={{ fontSize: '2.2rem', fontWeight: 800, color: 'var(--color-primary)' }}>#{appointment.queueNumber}</div>
           </div>
 
-          <div style={styles.infoGrid}>
+          <div className="info-grid-responsive" style={{ marginBottom: '20px', fontSize: '0.875rem' }}>
             <div style={styles.infoBlock}>
               <span style={styles.label}>Patient Name:</span>
               <strong style={styles.value}>{patientName}</strong>
@@ -86,7 +86,7 @@ const AppointmentSlipModal = ({ appointment, onClose }) => {
           </div>
 
           <div style={styles.qrSection}>
-            <QRCodeGenerator value={qrPayload} size={150} />
+            <QRCodeGenerator value={qrPayload} size={130} />
             <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '8px' }}>
               Scan QR Code at Doctor OPD Desk / Pharmacy
             </div>
@@ -98,28 +98,6 @@ const AppointmentSlipModal = ({ appointment, onClose }) => {
 };
 
 const styles = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-    backdropFilter: 'blur(8px)',
-    zIndex: 9999,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '20px',
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: '520px',
-    padding: '24px',
-    borderRadius: 'var(--border-radius-lg)',
-    backgroundColor: 'var(--bg-secondary)',
-    boxShadow: 'var(--box-shadow-lg)',
-  },
   topBar: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -131,7 +109,7 @@ const styles = {
   slipContainer: {
     border: '2px dashed var(--color-primary)',
     borderRadius: '16px',
-    padding: '24px',
+    padding: '20px',
     background: 'var(--bg-primary)',
   },
   slipHeader: {
@@ -145,13 +123,6 @@ const styles = {
     borderRadius: '12px',
     marginBottom: '20px',
     border: '1px solid rgba(37, 99, 235, 0.2)',
-  },
-  infoGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '12px',
-    marginBottom: '20px',
-    fontSize: '0.875rem',
   },
   infoBlock: {
     display: 'flex',
@@ -169,7 +140,11 @@ const styles = {
     textAlign: 'center',
     paddingTop: '12px',
     borderTop: '1px solid var(--border-color)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
   },
 };
 
 export default AppointmentSlipModal;
+

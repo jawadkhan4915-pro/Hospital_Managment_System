@@ -7,8 +7,8 @@ const PatientHistoryModal = ({ historyData, onClose }) => {
   const { patient, appointments = [], medicalRecords = [] } = historyData;
 
   return (
-    <div style={styles.overlay}>
-      <div className="card animate-fade-in" style={styles.modalCard}>
+    <div className="modal-overlay-responsive">
+      <div className="modal-card-responsive max-w-3xl animate-fade-in flex flex-col">
         <div style={styles.topBar}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <User size={22} color="var(--color-primary)" />

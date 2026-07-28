@@ -25,15 +25,15 @@ const PrescriptionSlipModal = ({ record, onClose }) => {
   });
 
   return (
-    <div style={styles.overlay}>
-      <div className="card animate-fade-in" style={styles.modalCard}>
+    <div className="modal-overlay-responsive">
+      <div className="modal-card-responsive max-w-xl animate-fade-in">
         <div style={styles.topBar}>
           <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Official Medical Prescription Slip</h3>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button className="btn btn-primary btn-sm" onClick={handlePrint}>
-              <Printer size={16} /> Print Prescription
+              <Printer size={16} /> <span className="hidden sm:inline">Print Prescription</span>
             </button>
-            <button className="btn btn-secondary btn-sm" onClick={onClose}>
+            <button className="btn btn-secondary btn-sm" onClick={onClose} aria-label="Close">
               <X size={16} />
             </button>
           </div>
