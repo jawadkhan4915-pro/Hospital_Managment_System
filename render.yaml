@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     branch: main
-    buildCommand: npm install
+    buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /health
     autoDeploy: true
@@ -13,6 +13,8 @@ services:
         value: production
       - key: PORT
         value: 10000
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=2048
       # Set these manually in the Render dashboard — never commit secrets to git
       - key: MONGO_URI
         sync: false
@@ -20,3 +22,4 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
+
