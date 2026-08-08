@@ -9,7 +9,7 @@ class UserRepository extends BaseRepository {
   async findByEmail(email) {
     if (!email) return null;
     const cleanEmail = email.trim().toLowerCase();
-    return User.findOne({ email: cleanEmail, isDeleted: false }).select('+password +mfaSecret');
+    return User.findOne({ email: cleanEmail, isDeleted: { $ne: true } }).select('+password +mfaSecret');
   }
 
   async findByIdWithSecrets(id) {

@@ -10,6 +10,8 @@ import dotenv from 'dotenv';
 import connectDB from './backend/config/database.js';
 import logger from './backend/config/logger.js';
 import errorHandler from './backend/middleware/error.middleware.js';
+import User from './backend/models/User.js';
+import seedData from './backend/utils/seeder.js';
 
 // Route Imports
 import authRoutes from './backend/routes/auth.routes.js';
@@ -33,8 +35,18 @@ const PORT = process.env.PORT || 5000;
 // Trust reverse proxy headers (Render, Vercel, Nginx, Cloudflare)
 app.set('trust proxy', 1);
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB & auto-seed if database is empty
+connectDB().then(async () => {
+  try {
+    const userCount = await User.countDocuments();
+    if (userCount === 0) {
+      logger.info('Database empty on cloud server. Auto-seeding initial demo accounts...');
+      await seedData(false);
+    }
+  } catch (err) {
+    logger.error(`Auto-seed check error: ${err.message}`);
+  }
+});
 
 // 1. HTTP Security Headers Hardening (Helmet)
 app.use(

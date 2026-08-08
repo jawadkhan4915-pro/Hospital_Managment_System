@@ -12,7 +12,7 @@ import logger from '../config/logger.js';
 
 dotenv.config();
 
-const seedData = async () => {
+const seedData = async (exitProcess = false) => {
   try {
     logger.info('Starting database seed sequence...');
 
@@ -205,16 +205,21 @@ const seedData = async () => {
 
     logger.info('Pharmacy store inventory items populated.');
     logger.info('Database seeding sequence completed successfully!');
-    process.exit(0);
+    if (exitProcess) {
+      process.exit(0);
+    }
   } catch (error) {
     logger.error(`Database seeding failed: ${error.message}`);
-    process.exit(1);
+    if (exitProcess) {
+      process.exit(1);
+    }
   }
 };
 
 // Execute if run directly
-if (process.argv[1].endsWith('seeder.js')) {
-  connectDB().then(seedData);
+if (process.argv[1] && process.argv[1].endsWith('seeder.js')) {
+  connectDB().then(() => seedData(true));
 }
 
 export default seedData;
+
