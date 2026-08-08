@@ -2,6 +2,7 @@ import React from 'react';
 import LandingNavbar from '../components/landing/LandingNavbar.jsx';
 import HeroSection from '../components/landing/HeroSection.jsx';
 import TrustStatsBar from '../components/landing/TrustStatsBar.jsx';
+import HospitalGallerySection from '../components/landing/HospitalGallerySection.jsx';
 import RoleShowcase from '../components/landing/RoleShowcase.jsx';
 import FeatureGrid from '../components/landing/FeatureGrid.jsx';
 import SecurityStrip from '../components/landing/SecurityStrip.jsx';
@@ -15,6 +16,7 @@ export default function LandingPage() {
       <main>
         <HeroSection />
         <TrustStatsBar />
+        <HospitalGallerySection />
         <RoleShowcase />
         <FeatureGrid />
         <SecurityStrip />
@@ -24,3 +26,4 @@ export default function LandingPage() {
     </div>
   );
 }
+

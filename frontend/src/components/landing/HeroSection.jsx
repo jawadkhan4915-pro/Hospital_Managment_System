@@ -1,72 +1,87 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sparkles, ShieldCheck, ArrowRight, Activity, Zap, Play } from 'lucide-react';
-import Hero3DScene from './Hero3DScene.jsx';
+import { ShieldCheck, ArrowRight, Activity, Users, FileText, Building2, CheckCircle, Clock } from 'lucide-react';
 
 export default function HeroSection() {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('facility');
+
+  const VISUALS = {
+    facility: {
+      url: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=1200&q=80',
+      title: 'St. Jude International Medical Center',
+      subtitle: '24/7 Tertiary Care & Emergency Operation Wing',
+    },
+    doctors: {
+      url: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=1200&q=80',
+      title: 'Specialist Consultation & EHR Platform',
+      subtitle: 'Real-time electronic prescriptions and queue synchronization',
+    },
+    icu: {
+      url: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1200&q=80',
+      title: 'Advanced Diagnostic & Ward Intelligence',
+      subtitle: 'Instant vital signs tracking & bed management system',
+    },
+  };
 
   return (
-    <section className="relative overflow-hidden pt-12 pb-20 sm:pt-16 sm:pb-28">
-      {/* Background Radial Ambient Lights */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute top-1/3 right-10 w-[400px] h-[400px] bg-cyan-500/15 rounded-full blur-[120px] pointer-events-none" />
-
+    <section className="relative overflow-hidden pt-10 pb-16 sm:pt-14 sm:pb-24 bg-gradient-to-b from-[var(--bg-tertiary)]/40 via-transparent to-transparent">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
           {/* Left Hero Content */}
-          <div className="lg:col-span-7 flex flex-col items-start text-left">
-            {/* Version Badge */}
+          <div className="lg:col-span-6 flex flex-col items-start text-left">
+            
+            {/* Trust Badge */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 text-xs sm:text-sm font-semibold mb-6 backdrop-blur-md"
+              transition={{ duration: 0.4 }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--color-primary-light)] border border-[var(--color-primary)]/20 text-[var(--color-primary)] text-xs sm:text-sm font-semibold mb-6 shadow-sm"
             >
-              <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
-              <span>Next-Gen Hospital Management System</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-              <span className="text-[var(--text-tertiary)]">Enterprise v2.4</span>
+              <Building2 className="w-4 h-4 text-[var(--color-primary)]" />
+              <span>Enterprise Clinical Management Solution</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)]" />
+              <span className="text-[var(--text-tertiary)] font-normal">v2.4 Certified</span>
             </motion.div>
 
             {/* Main Headline */}
             <motion.h1
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold font-outfit text-[var(--text-primary)] tracking-tight leading-[1.1] mb-6"
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[var(--text-primary)] tracking-tight leading-[1.15] mb-6"
             >
               Unified Clinical Control for{' '}
-              <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-400 bg-clip-text text-transparent">
-                Modern Healthcare
+              <span className="text-[var(--color-primary)] font-extrabold border-b-4 border-[var(--color-primary)]/30">
+                Modern Hospitals & Clinics
               </span>
             </motion.h1>
 
             {/* Subheadline */}
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-base sm:text-lg text-[var(--text-secondary)] font-jakarta leading-relaxed mb-8 max-w-2xl"
+              transition={{ duration: 0.4, delay: 0.15 }}
+              className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed mb-8 max-w-xl font-normal"
             >
-              Seamless real-time synchronization between Admin, Doctors, Nurses, Receptionists, Pharmacists, and Patients. Featuring bank-grade MFA, instant QR prescription slips, and automated billing workflows.
+              Seamless real-time operational coordination between Doctors, Nurses, Receptionists, Pharmacists, Patients, and Administrators. Featuring automated QR prescriptions, bank-grade authentication, and digital EHR workflows.
             </motion.p>
 
-            {/* CTAs */}
+            {/* Action Buttons */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-wrap items-center gap-4 w-full sm:w-auto"
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="flex flex-wrap items-center gap-4 w-full sm:w-auto mb-10"
             >
               <button
                 onClick={() => navigate('/auth')}
-                className="btn btn-primary btn-lg shadow-xl shadow-indigo-500/25 flex items-center gap-3 w-full sm:w-auto group"
+                className="btn btn-primary btn-lg shadow-md flex items-center gap-3 w-full sm:w-auto font-semibold"
               >
-                <span>Launch Interactive Demo</span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <span>Access Hospital System Demo</span>
+                <ArrowRight className="w-5 h-5" />
               </button>
 
               <button
@@ -74,61 +89,129 @@ export default function HeroSection() {
                   const el = document.getElementById('portals');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="btn btn-secondary btn-lg flex items-center gap-2.5 w-full sm:w-auto"
+                className="btn btn-secondary btn-lg flex items-center gap-2.5 w-full sm:w-auto font-semibold"
               >
-                <Play className="w-4 h-4 text-cyan-500 fill-cyan-500" />
-                <span>Explore 6 Role Portals</span>
+                <Users className="w-4 h-4 text-[var(--color-primary)]" />
+                <span>View 6 Workspace Portals</span>
               </button>
             </motion.div>
 
-            {/* Quick Metrics */}
+            {/* Key Clinical Metrics Bar */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="mt-10 pt-8 border-t border-[var(--border-color)] grid grid-cols-3 gap-6 w-full max-w-lg"
+              transition={{ duration: 0.4, delay: 0.25 }}
+              className="w-full pt-6 border-t border-[var(--border-color)] grid grid-cols-3 gap-4"
             >
-              <div>
-                <div className="text-2xl sm:text-3xl font-extrabold font-outfit text-[var(--text-primary)]">6</div>
-                <div className="text-xs text-[var(--text-tertiary)] font-medium">Role Dashboards</div>
+              <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+                <div className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">6 Roles</div>
+                <div className="text-xs text-[var(--text-tertiary)] font-medium">RBAC Workspaces</div>
               </div>
-              <div>
-                <div className="text-2xl sm:text-3xl font-extrabold font-outfit text-indigo-500">100%</div>
-                <div className="text-xs text-[var(--text-tertiary)] font-medium">MFA Protected</div>
+
+              <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+                <div className="text-xl sm:text-2xl font-bold text-[var(--color-success)]">100%</div>
+                <div className="text-xs text-[var(--text-tertiary)] font-medium">OTP Secured</div>
               </div>
-              <div>
-                <div className="text-2xl sm:text-3xl font-extrabold font-outfit text-cyan-500">&lt;50ms</div>
-                <div className="text-xs text-[var(--text-tertiary)] font-medium">Real-Time Sync</div>
+
+              <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+                <div className="text-xl sm:text-2xl font-bold text-[var(--color-primary)]">&lt;50ms</div>
+                <div className="text-xs text-[var(--text-tertiary)] font-medium">Live Queue Sync</div>
               </div>
             </motion.div>
+
           </div>
 
-          {/* Right 3D Visual Container */}
+          {/* Right Column: Hospital Photography & Live Virtual Interface */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="lg:col-span-5 relative"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+            className="lg:col-span-6 relative"
           >
-            <div className="relative rounded-3xl p-2 bg-gradient-to-b from-indigo-500/20 via-cyan-500/10 to-transparent border border-[var(--border-color)] shadow-2xl backdrop-blur-xl">
-              <div className="rounded-2xl overflow-hidden bg-[var(--bg-secondary)]/80 relative">
-                <Hero3DScene />
+            {/* Card Frame */}
+            <div className="rounded-2xl p-2.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] shadow-xl relative overflow-hidden">
+              
+              {/* Photo Selector Switcher */}
+              <div className="flex items-center justify-between gap-1 p-1.5 mb-2 bg-[var(--bg-tertiary)] rounded-xl border border-[var(--border-color)] text-xs font-semibold">
+                <button
+                  onClick={() => setActiveTab('facility')}
+                  className={`flex-1 py-1.5 px-3 rounded-lg transition-all ${
+                    activeTab === 'facility'
+                      ? 'bg-[var(--bg-secondary)] text-[var(--color-primary)] shadow-sm font-bold'
+                      : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  Medical Center
+                </button>
+                <button
+                  onClick={() => setActiveTab('doctors')}
+                  className={`flex-1 py-1.5 px-3 rounded-lg transition-all ${
+                    activeTab === 'doctors'
+                      ? 'bg-[var(--bg-secondary)] text-[var(--color-primary)] shadow-sm font-bold'
+                      : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  Doctor Consultation
+                </button>
+                <button
+                  onClick={() => setActiveTab('icu')}
+                  className={`flex-1 py-1.5 px-3 rounded-lg transition-all ${
+                    activeTab === 'icu'
+                      ? 'bg-[var(--bg-secondary)] text-[var(--color-primary)] shadow-sm font-bold'
+                      : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  Clinical Ward
+                </button>
+              </div>
+
+              {/* Main Photo Visual */}
+              <div className="relative h-[340px] sm:h-[400px] rounded-xl overflow-hidden group">
+                <img
+                  src={VISUALS[activeTab].url}
+                  alt={VISUALS[activeTab].title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
                 
-                {/* Floating Overlay Pill */}
-                <div className="absolute bottom-4 left-4 right-4 p-3.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] backdrop-blur-md flex items-center justify-between shadow-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center">
-                      <ShieldCheck size={18} />
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-[var(--text-primary)]">Zero-Trust Security</div>
-                      <div className="text-[10px] text-[var(--text-tertiary)]">JWT Session Tokens & OTP Verification</div>
-                    </div>
-                  </div>
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                {/* Dark Gradient Overlay for legibility */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+
+                {/* Caption Bar */}
+                <div className="absolute bottom-16 left-4 right-4 text-white">
+                  <span className="text-[10px] uppercase font-bold tracking-widest bg-[var(--color-primary)] px-2 py-0.5 rounded text-white inline-block mb-1">
+                    Live Hospital Visual
+                  </span>
+                  <h3 className="text-lg font-bold leading-tight">{VISUALS[activeTab].title}</h3>
+                  <p className="text-xs text-slate-300 font-normal">{VISUALS[activeTab].subtitle}</p>
+                </div>
+
+                {/* Top-Right Active Status Badge */}
+                <div className="absolute top-4 right-4 bg-slate-900/85 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full border border-slate-700/60 flex items-center gap-2 shadow-lg">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="font-semibold text-emerald-400">Emergency Desk Online</span>
                 </div>
               </div>
+
+              {/* Live Virtual Medical Dashboard Card Overlay */}
+              <div className="mt-3 p-3.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[var(--color-success-light)] text-[var(--color-success)] flex items-center justify-center flex-shrink-0">
+                    <ShieldCheck size={22} />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[var(--text-primary)]">Strict Patient Data Protection</div>
+                    <div className="text-[11px] text-[var(--text-tertiary)]">Encrypted database records & MFA login check</div>
+                  </div>
+                </div>
+
+                <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-[var(--color-primary)]">
+                  <CheckCircle size={15} />
+                  <span>HIPAA Grade</span>
+                </div>
+              </div>
+
             </div>
+
           </motion.div>
 
         </div>
@@ -136,3 +219,4 @@ export default function HeroSection() {
     </section>
   );
 }
+

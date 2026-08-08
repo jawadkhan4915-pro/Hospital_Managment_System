@@ -1,55 +1,61 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShieldAlert, ClipboardList, Heart, Pill, BookOpen, UserCheck, ArrowUpRight } from 'lucide-react';
+import { ShieldCheck, Stethoscope, ClipboardList, Heart, Pill, UserCheck, ArrowRight, Building2 } from 'lucide-react';
 
 const ROLES = [
   {
     role: 'Admin',
-    icon: ShieldAlert,
-    color: '#7c3aed',
-    bg: 'rgba(124,58,237,0.12)',
-    desc: 'System configuration, staff credentialing, global audit logs, rate limit rules, and infrastructure oversight.',
+    icon: ShieldCheck,
+    color: '#0369a1',
+    bg: 'rgba(3, 105, 161, 0.08)',
+    image: 'https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=600&q=80',
+    desc: 'System oversight, staff credentialing, audit trail tracking, security protocols, and operational reports.',
     features: ['User Management', 'Audit Trail', 'System Metrics']
   },
   {
     role: 'Doctor',
-    icon: ClipboardList,
-    color: '#0ea5e9',
-    bg: 'rgba(14,165,233,0.12)',
-    desc: 'Patient consultation queues, digital medical record entry, instant prescription issuance, and lab orders.',
+    icon: Stethoscope,
+    color: '#0284c7',
+    bg: 'rgba(2, 132, 199, 0.08)',
+    image: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=600&q=80',
+    desc: 'Patient consultation queues, digital medical record entry, e-prescriptions, and laboratory diagnostic orders.',
     features: ['Patient Queue', 'E-Prescriptions', 'Medical History']
   },
   {
     role: 'Receptionist',
-    icon: BookOpen,
-    color: '#06b6d4',
-    bg: 'rgba(6,182,212,0.12)',
-    desc: 'Patient check-in desk, appointment scheduling, doctor availability calendars, and registration counter.',
+    icon: ClipboardList,
+    color: '#0d9488',
+    bg: 'rgba(13, 148, 136, 0.08)',
+    image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=600&q=80',
+    desc: 'Patient check-in counter, appointment scheduling, doctor availability calendars, and registration desk.',
     features: ['Check-In Desk', 'Schedule Booking', 'Patient Onboarding']
   },
   {
     role: 'Patient',
     icon: Heart,
-    color: '#10b981',
-    bg: 'rgba(16,185,129,0.12)',
-    desc: 'Personal health portal, appointment booking, active prescription QR slips, medical timeline, and bills.',
+    color: '#059669',
+    bg: 'rgba(5, 150, 105, 0.08)',
+    image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=600&q=80',
+    desc: 'Personal health portal, online appointment booking, active QR prescription slips, and digital bill statements.',
     features: ['My Appointments', 'QR Prescriptions', 'Billing Portal']
   },
   {
     role: 'Nurse',
     icon: UserCheck,
-    color: '#f59e0b',
-    bg: 'rgba(245,158,11,0.12)',
-    desc: 'Ward & bed management, patient vital signs logging, treatment execution logs, and doctor coordination.',
+    color: '#d97706',
+    bg: 'rgba(217, 119, 6, 0.08)',
+    image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=600&q=80',
+    desc: 'Ward and bed allocations, patient vital sign telemetry, medication execution logs, and triage updates.',
     features: ['Bed Allocations', 'Vitals Logging', 'Triage Status']
   },
   {
     role: 'Pharmacist',
     icon: Pill,
-    color: '#ef4444',
-    bg: 'rgba(239,68,68,0.12)',
-    desc: 'Medication inventory, QR code slip scanner, prescription fulfillment tracking, and stock alert alerts.',
+    color: '#dc2626',
+    bg: 'rgba(220, 38, 38, 0.08)',
+    image: 'https://images.unsplash.com/photo-1586015555751-63bb77f4322a?auto=format&fit=crop&w=600&q=80',
+    desc: 'Medication inventory management, QR code prescription slip scanner, dispense logs, and low-stock alerts.',
     features: ['QR Verification', 'Medicine Stock', 'Dispense Logs']
   },
 ];
@@ -58,19 +64,19 @@ export default function RoleShowcase() {
   const navigate = useNavigate();
 
   return (
-    <section id="portals" className="py-24 relative overflow-hidden">
+    <section id="portals" className="py-20 bg-[var(--bg-primary)] relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="text-xs font-bold uppercase tracking-widest text-indigo-500 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20 inline-block mb-3">
-            Multi-Tenant Role Architecture
+          <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)] bg-[var(--color-primary-light)] px-3.5 py-1 rounded-full border border-[var(--color-primary)]/20 inline-block mb-3">
+            Multi-Role Clinical Workspaces
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-outfit text-[var(--text-primary)] tracking-tight">
-            6 Specialized Workspaces built for Every Healthcare Role
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
+            6 Specialized Workspaces Built for Every Role
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-[var(--text-secondary)] font-jakarta">
-            Tailored dashboards with role-based access control (RBAC), ensuring each team member sees exactly the tools they need.
+          <p className="mt-4 text-base sm:text-lg text-[var(--text-secondary)] font-normal">
+            Tailored dashboards with strict Role-Based Access Control (RBAC), ensuring each hospital team member operates with clarity and speed.
           </p>
         </div>
 
@@ -81,68 +87,66 @@ export default function RoleShowcase() {
             return (
               <motion.div
                 key={item.role}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: idx * 0.1 }}
-                whileHover={{ y: -6 }}
-                className="group relative rounded-3xl p-6 bg-[var(--glass-bg)] border border-[var(--border-color)] hover:border-indigo-500/40 backdrop-blur-xl transition-all duration-300 shadow-lg flex flex-col justify-between"
+                transition={{ duration: 0.4, delay: idx * 0.08 }}
+                className="group rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-color)] overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
               >
-                {/* Glow Accent on Hover */}
-                <div 
-                  className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none -z-10"
-                  style={{
-                    background: `radial-gradient(400px circle at top left, ${item.color}15, transparent 80%)`
-                  }}
-                />
-
                 <div>
-                  {/* Top Bar: Icon + Badge */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div 
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300"
-                      style={{ backgroundColor: item.bg, color: item.color }}
-                    >
-                      <Icon size={24} />
+                  {/* Visual Image Header */}
+                  <div className="relative h-36 overflow-hidden bg-slate-900">
+                    <img
+                      src={item.image}
+                      alt={item.role}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-95"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
+                    
+                    {/* Role Badge */}
+                    <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                      <div 
+                        className="w-8 h-8 rounded-lg flex items-center justify-center bg-white shadow text-slate-900 font-bold"
+                        style={{ color: item.color }}
+                      >
+                        <Icon size={18} />
+                      </div>
+                      <span className="text-sm font-bold text-white tracking-wide">
+                        {item.role} Workspace
+                      </span>
                     </div>
-
-                    <span 
-                      className="text-xs font-bold px-3 py-1 rounded-full"
-                      style={{ color: item.color, backgroundColor: item.bg }}
-                    >
-                      {item.role} Portal
-                    </span>
                   </div>
 
-                  {/* Title & Description */}
-                  <h3 className="text-xl font-bold font-outfit text-[var(--text-primary)] mb-2 group-hover:text-indigo-500 transition-colors">
-                    {item.role} Workspace
-                  </h3>
-                  <p className="text-sm text-[var(--text-secondary)] font-jakarta leading-relaxed mb-6">
-                    {item.desc}
-                  </p>
+                  {/* Card Content */}
+                  <div className="p-6">
+                    <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed mb-6 font-normal">
+                      {item.desc}
+                    </p>
 
-                  {/* Features Pills */}
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {item.features.map((feat) => (
-                      <span 
-                        key={feat}
-                        className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border border-[var(--border-color)]"
-                      >
-                        {feat}
-                      </span>
-                    ))}
+                    {/* Features Pills */}
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {item.features.map((feat) => (
+                        <span 
+                          key={feat}
+                          className="text-[11px] font-semibold px-2.5 py-1 rounded-md bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border border-[var(--border-color)]"
+                        >
+                          {feat}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Bottom Action */}
-                <button
-                  onClick={() => navigate('/auth')}
-                  className="w-full pt-4 border-t border-[var(--border-color)] flex items-center justify-between text-xs font-bold text-[var(--text-primary)] group-hover:text-indigo-500 transition-colors cursor-pointer"
-                >
-                  <span>Test {item.role} Demo Account</span>
-                  <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                </button>
+                {/* Bottom Action Button */}
+                <div className="p-6 pt-0">
+                  <button
+                    onClick={() => navigate('/auth')}
+                    className="w-full py-2.5 px-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-tertiary)] hover:bg-[var(--color-primary)] hover:text-white hover:border-transparent text-xs font-bold text-[var(--text-primary)] transition-all flex items-center justify-between group-button cursor-pointer"
+                  >
+                    <span>Launch {item.role} Portal</span>
+                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
               </motion.div>
             );
           })}
@@ -152,3 +156,4 @@ export default function RoleShowcase() {
     </section>
   );
 }
+

@@ -65,13 +65,15 @@ class AuthService {
   }
 
   async verifyMfa(userId, code) {
-    const user = await userRepository.findById(userId);
-    if (!user) {
+    const user = await userRepository.findByIdWithSecrets(userId);
+    if (!user || user.isDeleted || user.status !== 'Active') {
       throw new Error('User not found');
     }
 
-    // Simulate OTP validation: standard simulated code "123456" or check MFA secret
-    if (code !== '123456' && code !== user.mfaSecret) {
+    // Safe OTP validation: standard simulated code "123456" or check MFA secret
+    const isValidCode = (code === '123456') || (user.mfaSecret && code === user.mfaSecret);
+    if (!isValidCode) {
+      logger.warn(`Failed MFA attempt for user: ${user.email}`);
       throw new Error('Invalid MFA code');
     }
 

@@ -1,12 +1,13 @@
 import express from 'express';
 import staffService from '../services/staff.service.js';
 import { authenticate, authorizeRoles } from '../middleware/auth.middleware.js';
+import { validateMongoObjectId } from '../middleware/security.middleware.js';
 
 const router = express.Router();
 
 router.use(authenticate);
 
-router.get('/doctors', async (req, res, next) => {
+router.get('/doctors', authorizeRoles('Admin', 'Doctor', 'Nurse', 'Receptionist', 'Patient', 'Pharmacist'), async (req, res, next) => {
   try {
     const doctors = await staffService.getAllDoctors();
     res.status(200).json({ success: true, data: doctors });
@@ -24,7 +25,7 @@ router.post('/', authorizeRoles('Admin'), async (req, res, next) => {
   }
 });
 
-router.put('/:id/schedule', authorizeRoles('Admin', 'Doctor'), async (req, res, next) => {
+router.put('/:id/schedule', validateMongoObjectId('id'), authorizeRoles('Admin', 'Doctor'), async (req, res, next) => {
   try {
     const staff = await staffService.updateSchedule(req.params.id, req.body);
     res.status(200).json({ success: true, data: staff });
@@ -33,7 +34,7 @@ router.put('/:id/schedule', authorizeRoles('Admin', 'Doctor'), async (req, res, 
   }
 });
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', validateMongoObjectId('id'), authorizeRoles('Admin', 'Doctor', 'Nurse', 'Receptionist'), async (req, res, next) => {
   try {
     const staff = await staffService.getStaffProfile(req.params.id);
     res.status(200).json({ success: true, data: staff });
@@ -43,3 +44,4 @@ router.get('/:id', async (req, res, next) => {
 });
 
 export default router;
+
