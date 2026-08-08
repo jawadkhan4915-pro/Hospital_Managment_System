@@ -414,7 +414,7 @@ const AuthPage = () => {
 
       {/* Footer info */}
       <footer className="p-4 text-center text-[11px] text-[var(--text-tertiary)] font-jakarta relative z-10">
-        Enterprise Hospital Management System &bull; Secure Multi-Tenant Architecture &bull; 2026
+        Enterprise Hospital Management System &bull; Secure Multi-Tenant Architecture
       </footer>
 
     </div>
@@ -422,3 +422,4 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
+
