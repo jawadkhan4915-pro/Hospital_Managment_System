@@ -30,6 +30,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust reverse proxy headers (Render, Vercel, Nginx, Cloudflare)
+app.set('trust proxy', 1);
+
 // Connect to MongoDB
 connectDB();
 
@@ -108,12 +111,14 @@ const limiter = rateLimit({
   max: 100, // limit each IP to 100 requests per 15 mins
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again after 15 minutes',
   },
 });
 app.use('/api/', limiter);
+
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);

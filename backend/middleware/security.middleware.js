@@ -101,6 +101,7 @@ export const authRateLimiter = rateLimit({
   max: 5, // Limit each IP to 5 requests per window
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     success: false,
     message: 'Too many authentication attempts from this IP address. Please try again after 15 minutes.',
@@ -110,3 +111,4 @@ export const authRateLimiter = rateLimit({
     res.status(429).json(options.message);
   },
 });
+
