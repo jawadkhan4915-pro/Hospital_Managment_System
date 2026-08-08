@@ -3,44 +3,43 @@ import mongoose from 'mongoose';
 import logger from '../config/logger.js';
 
 /**
- * Sanitizes input data recursively to strip NoSQL injection operators ($ and .)
+ * Recursively sanitizes object KEYS only to prevent NoSQL injection.
+ * String values (passwords, emails, etc.) are left untouched.
+ * Only object keys starting with $ are removed (e.g. { $where: ... }).
  */
-const sanitizeValue = (value) => {
-  if (value === null || value === undefined) return value;
-  
-  if (typeof value === 'string') {
-    // Replace leading $ or . operators if found in keys/values
-    return value.replace(/^\$|\./g, '');
+const sanitizeKeys = (data) => {
+  if (data === null || data === undefined) return data;
+
+  // Primitive values (string, number, boolean) — do NOT modify
+  if (typeof data !== 'object') return data;
+
+  if (Array.isArray(data)) {
+    return data.map(sanitizeKeys);
   }
 
-  if (Array.isArray(value)) {
-    return value.map(sanitizeValue);
-  }
-
-  if (typeof value === 'object') {
-    const sanitizedObj = {};
-    for (const key of Object.keys(value)) {
-      // Remove keys starting with $ or containing .
-      const cleanKey = key.replace(/^\$|\./g, '');
-      if (cleanKey) {
-        sanitizedObj[cleanKey] = sanitizeValue(value[key]);
-      }
+  const sanitized = {};
+  for (const key of Object.keys(data)) {
+    // Drop keys that start with $ (NoSQL injection operator)
+    if (key.startsWith('$')) {
+      logger.warn(`Blocked NoSQL injection key: "${key}"`);
+      continue;
     }
-    return sanitizedObj;
+    sanitized[key] = sanitizeKeys(data[key]);
   }
-
-  return value;
+  return sanitized;
 };
 
 /**
- * Express middleware to prevent NoSQL Query Injection attacks
+ * Express middleware to prevent NoSQL Query Injection attacks.
+ * Sanitizes object keys in req.body, req.query, req.params only.
  */
 export const sanitizeNoSqlInjection = (req, res, next) => {
-  if (req.body) req.body = sanitizeValue(req.body);
-  if (req.query) req.query = sanitizeValue(req.query);
-  if (req.params) req.params = sanitizeValue(req.params);
+  if (req.body && typeof req.body === 'object') req.body = sanitizeKeys(req.body);
+  if (req.query && typeof req.query === 'object') req.query = sanitizeKeys(req.query);
+  if (req.params && typeof req.params === 'object') req.params = sanitizeKeys(req.params);
   next();
 };
+
 
 /**
  * Express middleware to sanitize XSS HTML script injections
