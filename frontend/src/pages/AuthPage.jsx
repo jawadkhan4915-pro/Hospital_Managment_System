@@ -129,8 +129,8 @@ const AuthPage = () => {
       </header>
 
       {/* Main Split-Screen Container */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative z-10 max-w-7xl w-full mx-auto my-auto">
-        <div className="w-full grid grid-cols-1 lg:grid-cols-12 rounded-3xl border border-[var(--border-color)] bg-[var(--glass-bg)] backdrop-blur-2xl shadow-2xl overflow-hidden min-h-[640px]">
+      <main className="flex-1 flex items-center justify-center p-3 sm:p-6 lg:p-8 relative z-10 max-w-7xl w-full mx-auto my-auto">
+        <div className="w-full grid grid-cols-1 lg:grid-cols-12 rounded-2xl sm:rounded-3xl border border-[var(--border-color)] bg-[var(--glass-bg)] backdrop-blur-2xl shadow-2xl overflow-hidden min-h-0 lg:min-h-[640px]">
           
           {/* Left Panel: Animated Branding & Feature Highlight */}
           <div className="lg:col-span-5 p-8 sm:p-12 bg-gradient-to-br from-indigo-900/90 via-indigo-950/95 to-slate-950 text-white flex flex-col justify-between relative overflow-hidden hidden lg:flex">
@@ -193,7 +193,7 @@ const AuthPage = () => {
           </div>
 
           {/* Right Panel: Auth Form & Demo Accounts */}
-          <div className="lg:col-span-7 p-6 sm:p-10 lg:p-12 flex flex-col justify-between bg-[var(--bg-secondary)]/50">
+          <div className="lg:col-span-7 p-4 sm:p-8 lg:p-12 flex flex-col justify-between bg-[var(--bg-secondary)]/50">
             <div>
               
               {/* Form Title */}
@@ -381,26 +381,26 @@ const AuthPage = () => {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-3 gap-2">
                   {DEMO_ACCOUNTS.map((acc) => (
                     <motion.button
                       key={acc.role}
                       type="button"
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => fillDemo(acc)}
-                      className="p-2.5 rounded-xl border border-[var(--border-color)] flex items-center justify-between text-left transition-all hover:shadow-md cursor-pointer group"
+                      className="p-2.5 rounded-xl border border-[var(--border-color)] flex items-center justify-between text-left transition-all hover:shadow-md cursor-pointer group min-h-[48px]"
                       style={{ backgroundColor: acc.bg }}
                     >
-                      <div>
+                      <div className="min-w-0 pr-1">
                         <div className="text-xs font-bold font-outfit" style={{ color: acc.color }}>
                           {acc.role}
                         </div>
-                        <div className="text-[10px] text-[var(--text-tertiary)] truncate max-w-[100px]">
+                        <div className="text-[10px] text-[var(--text-tertiary)] truncate max-w-[140px]">
                           {acc.email}
                         </div>
                       </div>
-                      <Sparkles size={13} style={{ color: acc.color }} className="opacity-70 group-hover:opacity-100 transition-opacity" />
+                      <Sparkles size={13} style={{ color: acc.color }} className="opacity-70 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                     </motion.button>
                   ))}
                 </div>

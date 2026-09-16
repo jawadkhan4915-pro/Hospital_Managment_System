@@ -9,22 +9,22 @@ const PatientHistoryModal = ({ historyData, onClose }) => {
   return (
     <div className="modal-overlay-responsive">
       <div className="modal-card-responsive max-w-3xl animate-fade-in flex flex-col">
-        <div style={styles.topBar}>
+        <div className="responsive-toolbar no-print" style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--border-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <User size={22} color="var(--color-primary)" />
             <div>
-              <h3 style={{ fontSize: '1.2rem', margin: 0 }}>Lifetime Medical File: {patient.name}</h3>
+              <h3 style={{ fontSize: '1.15rem', margin: 0 }}>Lifetime Medical File: {patient.name}</h3>
               <span style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>National CNIC: {patient.cnic}</span>
             </div>
           </div>
-          <button className="btn btn-secondary btn-sm" onClick={onClose}>
+          <button className="btn btn-secondary btn-sm" onClick={onClose} aria-label="Close">
             <X size={18} />
           </button>
         </div>
 
         <div style={styles.scrollContent}>
           {/* Demographic Bar */}
-          <div style={styles.demoBar}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-xs sm:text-sm">
             <div><span style={styles.label}>Patient ID:</span> <strong>{patient.patientId}</strong></div>
             <div><span style={styles.label}>Gender / DOB:</span> <strong>{patient.gender} ({new Date(patient.dateOfBirth).toLocaleDateString()})</strong></div>
             <div><span style={styles.label}>Phone:</span> <strong>{patient.phone}</strong></div>

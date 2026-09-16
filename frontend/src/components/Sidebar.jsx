@@ -41,12 +41,12 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }) {
   };
 
   const sidebarContent = (
-    <div className="h-full flex flex-col justify-between p-6 bg-[var(--glass-bg)] backdrop-blur-2xl border-r border-[var(--border-color)]">
+    <div className="h-full flex flex-col justify-between p-5 sm:p-6 bg-[var(--glass-bg)] backdrop-blur-2xl border-r border-[var(--border-color)] overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
       <div>
         {/* Top Header: Logo + Close Btn for Mobile */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[var(--gradient-primary)] flex items-center justify-center shadow-lg shadow-indigo-500/30 text-white">
+            <div className="w-10 h-10 rounded-xl bg-[var(--gradient-primary)] flex items-center justify-center shadow-lg shadow-indigo-500/30 text-white flex-shrink-0">
               <Activity size={22} />
             </div>
             <div>
@@ -62,7 +62,7 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }) {
           {/* Close button on mobile */}
           <button
             onClick={() => setMobileMenuOpen(false)}
-            className="lg:hidden p-2 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]"
+            className="lg:hidden p-2.5 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer"
             aria-label="Close sidebar"
           >
             <X size={20} />
@@ -71,7 +71,7 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }) {
 
         {/* User Card */}
         <div className="p-3.5 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] mb-8 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[var(--gradient-primary)] text-white font-bold font-outfit flex items-center justify-center shadow-md text-base">
+          <div className="w-10 h-10 rounded-full bg-[var(--gradient-primary)] text-white font-bold font-outfit flex items-center justify-center shadow-md text-base flex-shrink-0">
             {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
           </div>
           <div className="overflow-hidden flex-1">
@@ -87,7 +87,10 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }) {
 
         {/* Navigation */}
         <nav className="space-y-1">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold text-sm border border-indigo-500/20 shadow-sm">
+          <div 
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold text-sm border border-indigo-500/20 shadow-sm cursor-pointer"
+          >
             <LayoutDashboard size={18} />
             <span>Dashboard Hub</span>
           </div>
@@ -96,8 +99,11 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }) {
 
       {/* Logout Button */}
       <button
-        onClick={logout}
-        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-[var(--border-color)] text-xs font-bold text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/30 hover:bg-rose-500/10 transition-all cursor-pointer group"
+        onClick={() => {
+          setMobileMenuOpen(false);
+          logout();
+        }}
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-[var(--border-color)] text-xs font-bold text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/30 hover:bg-rose-500/10 transition-all cursor-pointer group min-h-[44px]"
       >
         <LogOut size={18} className="group-hover:-translate-x-0.5 transition-transform" />
         <span>Exit System</span>
@@ -122,7 +128,7 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 lg:hidden"
+              className="mobile-sidebar-backdrop z-50 lg:hidden"
             />
             {/* Slide Drawer */}
             <motion.aside
@@ -130,7 +136,7 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }) {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 bottom-0 left-0 w-72 z-50 lg:hidden"
+              className="fixed top-0 bottom-0 left-0 w-[82vw] max-w-xs z-50 lg:hidden"
             >
               {sidebarContent}
             </motion.aside>

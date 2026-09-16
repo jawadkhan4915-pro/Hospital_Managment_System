@@ -7,6 +7,9 @@ export default {
   darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
+      screens: {
+        'xs': '440px',
+      },
       colors: {
         brand: {
           50: '#eef2ff',

@@ -223,8 +223,8 @@ const ReceptionistDashboard = () => {
             </p>
           </div>
         </div>
-        <form onSubmit={handleCnicSearch} style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: '260px' }}>
+        <form onSubmit={handleCnicSearch} className="responsive-toolbar" style={{ marginTop: '14px' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 'min(100%, 260px)' }}>
             <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
             <input
               type="text"
@@ -235,13 +235,13 @@ const ReceptionistDashboard = () => {
               style={{ paddingLeft: '40px' }}
             />
           </div>
-          <button type="submit" className="btn btn-primary" disabled={searchingCnic}>
+          <button type="submit" className="btn btn-primary w-full sm:w-auto" disabled={searchingCnic}>
             <History size={16} /> {searchingCnic ? 'Searching...' : 'Fetch Lifetime Record'}
           </button>
         </form>
       </div>
 
-      <div style={styles.contentGrid}>
+      <div className="responsive-content-grid">
         {/* Register Walk-In Patient */}
         <div className="card">
           <h3 style={styles.cardTitle}>
@@ -259,8 +259,8 @@ const ReceptionistDashboard = () => {
                 required
               />
             </div>
-            <div style={styles.formRow}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="responsive-form-row">
+              <div className="form-group">
                 <label className="form-label">CNIC Number</label>
                 <input
                   type="text"
@@ -271,7 +271,7 @@ const ReceptionistDashboard = () => {
                   required
                 />
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label className="form-label">Date of Birth</label>
                 <input
                   type="date"
@@ -282,8 +282,8 @@ const ReceptionistDashboard = () => {
                 />
               </div>
             </div>
-            <div style={styles.formRow}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="responsive-form-row">
+              <div className="form-group">
                 <label className="form-label">Gender</label>
                 <select
                   className="form-control"
@@ -295,7 +295,7 @@ const ReceptionistDashboard = () => {
                   <option value="Other">Other</option>
                 </select>
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label className="form-label">Phone Number</label>
                 <input
                   type="tel"
@@ -307,8 +307,8 @@ const ReceptionistDashboard = () => {
                 />
               </div>
             </div>
-            <div style={styles.formRow}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="responsive-form-row">
+              <div className="form-group">
                 <label className="form-label">Blood Group</label>
                 <select
                   className="form-control"
@@ -325,7 +325,7 @@ const ReceptionistDashboard = () => {
                   <option value="AB-">AB-</option>
                 </select>
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label className="form-label">Address</label>
                 <input
                   type="text"
@@ -347,7 +347,7 @@ const ReceptionistDashboard = () => {
         <div className="card">
           {selectedPatient ? (
             <div>
-              <div style={styles.selectedHeader}>
+              <div className="responsive-toolbar" style={{ marginBottom: '16px' }}>
                 <div>
                   <h3 style={styles.cardTitle}>Book Session: {selectedPatient.name}</h3>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>CNIC: {selectedPatient.cnic}</span>
@@ -371,8 +371,8 @@ const ReceptionistDashboard = () => {
                   </select>
                 </div>
 
-                <div style={styles.formRow}>
-                  <div className="form-group" style={{ flex: 1 }}>
+                <div className="responsive-form-row">
+                  <div className="form-group">
                     <label className="form-label">Consultation Room</label>
                     <select
                       className="form-control"
@@ -387,7 +387,7 @@ const ReceptionistDashboard = () => {
                       <option value="Room 201">Room 201 - Executive Desk</option>
                     </select>
                   </div>
-                  <div className="form-group" style={{ flex: 1 }}>
+                  <div className="form-group">
                     <label className="form-label">Date</label>
                     <input
                       type="date"
@@ -399,8 +399,8 @@ const ReceptionistDashboard = () => {
                   </div>
                 </div>
 
-                <div style={styles.formRow}>
-                  <div className="form-group" style={{ flex: 1 }}>
+                <div className="responsive-form-row">
+                  <div className="form-group">
                     <label className="form-label">Time Slot</label>
                     <select
                       className="form-control"
@@ -414,7 +414,7 @@ const ReceptionistDashboard = () => {
                       <option value="15:00 - 15:30">03:00 - 03:30 PM</option>
                     </select>
                   </div>
-                  <div className="form-group" style={{ flex: 1 }}>
+                  <div className="form-group">
                     <label className="form-label">Consultation Type</label>
                     <select
                       className="form-control"
@@ -553,11 +553,6 @@ const styles = {
     backgroundColor: 'var(--color-primary-light)',
     border: '1px solid rgba(37, 99, 235, 0.25)',
   },
-  contentGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
-    gap: '24px',
-  },
   cardTitle: {
     fontSize: '1.15rem',
     fontWeight: '700',
@@ -566,19 +561,9 @@ const styles = {
     alignItems: 'center',
     gap: '10px',
   },
-  selectedHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '16px',
-  },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '14px',
-  },
-  formRow: {
-    display: 'flex',
     gap: '14px',
   },
 };

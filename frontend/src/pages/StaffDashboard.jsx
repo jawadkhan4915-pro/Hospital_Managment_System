@@ -183,7 +183,7 @@ const StaffDashboard = () => {
         </p>
       </div>
 
-      <div style={styles.contentGrid}>
+      <div className="responsive-content-grid">
         {/* Register Patient Profile */}
         <div className="card">
           <h3 style={styles.cardTitle}>
@@ -201,8 +201,8 @@ const StaffDashboard = () => {
                 required
               />
             </div>
-            <div style={styles.formRow}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="responsive-form-row">
+              <div className="form-group">
                 <label className="form-label">Date of Birth</label>
                 <input
                   type="date"
@@ -212,7 +212,7 @@ const StaffDashboard = () => {
                   required
                 />
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label className="form-label">Gender</label>
                 <select
                   className="form-control"
@@ -225,8 +225,8 @@ const StaffDashboard = () => {
                 </select>
               </div>
             </div>
-            <div style={styles.formRow}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="responsive-form-row">
+              <div className="form-group">
                 <label className="form-label">Phone Number</label>
                 <input
                   type="tel"
@@ -237,7 +237,7 @@ const StaffDashboard = () => {
                   required
                 />
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label className="form-label">Blood Group</label>
                 <select
                   className="form-control"
@@ -276,7 +276,7 @@ const StaffDashboard = () => {
         <div className="card">
           {selectedPatient ? (
             <div>
-              <div style={styles.selectedHeader}>
+              <div className="responsive-toolbar" style={{ marginBottom: '16px' }}>
                 <h3 style={styles.cardTitle}>Selected: {selectedPatient.name}</h3>
                 <button className="btn btn-secondary btn-sm" onClick={() => setSelectedPatient(null)}>
                   Cancel
@@ -288,26 +288,26 @@ const StaffDashboard = () => {
                 <h4 style={styles.sectionHeader}>
                   <Heart size={16} color="var(--color-danger)" /> Capture Vitals
                 </h4>
-                <div style={styles.formRow}>
-                  <div className="form-group" style={{ flex: 1 }}>
+                <div className="responsive-form-row">
+                  <div className="form-group">
                     <label className="form-label">BP (mmHg)</label>
                     <input type="text" className="form-control" placeholder="120/80" value={vitalsForm.bp} onChange={(e) => setVitalsForm({ ...vitalsForm, bp: e.target.value })} required />
                   </div>
-                  <div className="form-group" style={{ flex: 1 }}>
+                  <div className="form-group">
                     <label className="form-label">Pulse (bpm)</label>
                     <input type="number" className="form-control" placeholder="72" value={vitalsForm.pulse} onChange={(e) => setVitalsForm({ ...vitalsForm, pulse: e.target.value })} required />
                   </div>
-                  <div className="form-group" style={{ flex: 1 }}>
+                  <div className="form-group">
                     <label className="form-label">Temp (°C)</label>
                     <input type="number" step="0.1" className="form-control" placeholder="36.5" value={vitalsForm.temp} onChange={(e) => setVitalsForm({ ...vitalsForm, temp: e.target.value })} required />
                   </div>
                 </div>
-                <div style={styles.formRow}>
-                  <div className="form-group" style={{ flex: 1 }}>
+                <div className="responsive-form-row">
+                  <div className="form-group">
                     <label className="form-label">Weight (kg)</label>
                     <input type="number" step="0.1" className="form-control" placeholder="70" value={vitalsForm.weight} onChange={(e) => setVitalsForm({ ...vitalsForm, weight: e.target.value })} required />
                   </div>
-                  <div className="form-group" style={{ flex: 1 }}>
+                  <div className="form-group">
                     <label className="form-label">Height (cm)</label>
                     <input type="number" step="0.1" className="form-control" placeholder="175" value={vitalsForm.height} onChange={(e) => setVitalsForm({ ...vitalsForm, height: e.target.value })} required />
                   </div>
@@ -334,12 +334,12 @@ const StaffDashboard = () => {
                     ))}
                   </select>
                 </div>
-                <div style={styles.formRow}>
-                  <div className="form-group" style={{ flex: 1 }}>
+                <div className="responsive-form-row">
+                  <div className="form-group">
                     <label className="form-label">Date</label>
                     <input type="date" className="form-control" value={apptForm.date} onChange={(e) => setApptForm({ ...apptForm, date: e.target.value })} required />
                   </div>
-                  <div className="form-group" style={{ flex: 1 }}>
+                  <div className="form-group">
                     <label className="form-label">Slot</label>
                     <select
                       className="form-control"
@@ -368,9 +368,9 @@ const StaffDashboard = () => {
 
       {/* Patients List */}
       <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+        <div className="responsive-toolbar" style={{ marginBottom: '20px' }}>
           <h3 style={styles.cardTitle}>Hospital Patient Directory</h3>
-          <div style={{ position: 'relative', width: '260px' }}>
+          <div style={{ position: 'relative', minWidth: '240px' }}>
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
             <input
               type="text"
@@ -449,11 +449,6 @@ const styles = {
     flexDirection: 'column',
     gap: '24px',
   },
-  contentGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
-    gap: '24px',
-  },
   cardTitle: {
     fontSize: '1.15rem',
     fontWeight: '700',
@@ -473,19 +468,9 @@ const styles = {
     borderBottom: '1px solid var(--border-color)',
     paddingBottom: '8px',
   },
-  selectedHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '16px',
-  },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '14px',
-  },
-  formRow: {
-    display: 'flex',
     gap: '14px',
   },
 };

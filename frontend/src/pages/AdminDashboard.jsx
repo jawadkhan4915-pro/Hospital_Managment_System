@@ -156,7 +156,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Metrics Row */}
-      <div style={styles.metricsGrid}>
+      <div className="responsive-metrics-grid">
         <div className="stat-card">
           <div>
             <div style={styles.metricValue}>{stats.patientCount}</div>
@@ -198,7 +198,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      <div style={styles.contentGrid}>
+      <div className="responsive-content-grid">
         {/* Register Staff Form */}
         <div className="card">
           <h3 style={styles.cardTitle}>Provision Hospital Staff</h3>
@@ -214,8 +214,8 @@ const AdminDashboard = () => {
                 required
               />
             </div>
-            <div style={styles.formRow}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="responsive-form-row">
+              <div className="form-group">
                 <label className="form-label">Email</label>
                 <input
                   type="email"
@@ -226,7 +226,7 @@ const AdminDashboard = () => {
                   required
                 />
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label className="form-label">Password</label>
                 <input
                   type="password"
@@ -239,8 +239,8 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <div style={styles.formRow}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="responsive-form-row">
+              <div className="form-group">
                 <label className="form-label">Staff Role</label>
                 <select
                   className="form-control"
@@ -254,7 +254,7 @@ const AdminDashboard = () => {
                   <option value="Accountant">Accountant</option>
                 </select>
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label className="form-label">Department</label>
                 <input
                   type="text"
@@ -281,8 +281,8 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            <div style={styles.formRow}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="responsive-form-row">
+              <div className="form-group">
                 <label className="form-label">Qualification</label>
                 <input
                   type="text"
@@ -293,7 +293,7 @@ const AdminDashboard = () => {
                   required
                 />
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label className="form-label">Base Salary ($)</label>
                 <input
                   type="number"
@@ -313,10 +313,10 @@ const AdminDashboard = () => {
 
         {/* Doctors Directory Table */}
         <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+          <div className="responsive-toolbar" style={{ marginBottom: '20px' }}>
             <h3 style={styles.cardTitle}>Medical Specialists Directory</h3>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <div style={{ position: 'relative' }}>
+            <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
+              <div style={{ position: 'relative', flex: 1 }}>
                 <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
                 <input
                   type="text"
@@ -391,11 +391,6 @@ const styles = {
   headerRow: {
     marginBottom: '8px',
   },
-  metricsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-    gap: '20px',
-  },
   metricValue: {
     fontSize: '1.75rem',
     fontWeight: '800',
@@ -407,11 +402,6 @@ const styles = {
     color: 'var(--text-secondary)',
     marginTop: '2px',
   },
-  contentGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))',
-    gap: '24px',
-  },
   cardTitle: {
     fontSize: '1.15rem',
     fontWeight: '700',
@@ -419,10 +409,6 @@ const styles = {
   form: {
     display: 'flex',
     flexDirection: 'column',
-  },
-  formRow: {
-    display: 'flex',
-    gap: '14px',
   },
 };
 

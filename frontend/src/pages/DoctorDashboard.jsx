@@ -225,9 +225,9 @@ const DoctorDashboard = () => {
         </form>
       </div>
 
-      <div style={styles.dashboardGrid}>
+      <div className="responsive-dashboard-grid">
         {/* Appointment Queue */}
-        <div className="card" style={styles.queueCard}>
+        <div className="card responsive-card-scroll">
           <h3 style={styles.panelTitle}>
             <Calendar size={20} color="var(--color-primary)" /> Today's Patient Queue ({activeQueue.length})
           </h3>
@@ -263,16 +263,16 @@ const DoctorDashboard = () => {
         </div>
 
         {/* EMR SOAP form */}
-        <div className="card" style={styles.consultationCard}>
+        <div className="card responsive-card-scroll">
           {selectedAppointment ? (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div className="responsive-toolbar" style={{ marginBottom: '16px' }}>
                 <h3 style={styles.panelTitle}>
                   <FilePlus size={20} color="var(--color-success)" /> Consultation: {selectedAppointment.patientId?.name}
                 </h3>
                 {selectedAppointment.patientId?.cnic && (
                   <button
-                    className="btn btn-secondary btn-sm"
+                    className="btn btn-secondary btn-sm w-full sm:w-auto"
                     onClick={async () => {
                       const res = await fetchWithAuth(`/api/v1/patients/cnic/${encodeURIComponent(selectedAppointment.patientId.cnic)}`);
                       const d = await res.json();
@@ -290,7 +290,7 @@ const DoctorDashboard = () => {
                   {(() => {
                     const latest = selectedAppointment.patientId.vitals[selectedAppointment.patientId.vitals.length - 1];
                     return (
-                      <div style={styles.vitalsGrid}>
+                      <div className="responsive-vitals-grid">
                         <span>BP: <strong>{latest.bloodPressure}</strong></span>
                         <span>Temp: <strong>{latest.temperature}°C</strong></span>
                         <span>Pulse: <strong>{latest.pulse} bpm</strong></span>
@@ -314,7 +314,7 @@ const DoctorDashboard = () => {
                   />
                 </div>
 
-                <div style={styles.soapSection}>
+                <div className="responsive-soap-grid">
                   <div className="form-group">
                     <label className="form-label">Subjective (Symptoms)</label>
                     <textarea
@@ -359,14 +359,13 @@ const DoctorDashboard = () => {
 
                 <div style={styles.prescriptionSection}>
                   <h4 style={{ fontSize: '0.95rem', marginBottom: '12px', fontWeight: '700' }}>Prescribe Medications (Embedded into QR Code)</h4>
-                  <div style={styles.prescriptionFields}>
+                  <div className="responsive-prescription-row">
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Medicine"
+                      placeholder="Medicine Name"
                       value={medName}
                       onChange={(e) => setMedName(e.target.value)}
-                      style={{ flex: 2 }}
                     />
                     <input
                       type="text"
@@ -374,7 +373,6 @@ const DoctorDashboard = () => {
                       placeholder="Dosage (500mg)"
                       value={medDosage}
                       onChange={(e) => setMedDosage(e.target.value)}
-                      style={{ flex: 1 }}
                     />
                     <input
                       type="text"
@@ -382,17 +380,15 @@ const DoctorDashboard = () => {
                       placeholder="Freq (1-0-1)"
                       value={medFreq}
                       onChange={(e) => setMedFreq(e.target.value)}
-                      style={{ flex: 1 }}
                     />
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Duration"
+                      placeholder="Duration (5 Days)"
                       value={medDur}
                       onChange={(e) => setMedDur(e.target.value)}
-                      style={{ flex: 1 }}
                     />
-                    <button type="button" onClick={handleAddMedication} className="btn btn-secondary">
+                    <button type="button" onClick={handleAddMedication} className="btn btn-secondary w-full sm:w-auto">
                       <Plus size={16} /> Add
                     </button>
                   </div>
@@ -513,28 +509,6 @@ const styles = {
     flexDirection: 'column',
     gap: '24px',
   },
-  dashboardGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 2fr',
-    gap: '24px',
-    alignItems: 'start',
-  },
-  queueCard: {
-    maxHeight: 'calc(100vh - 210px)',
-    minHeight: '500px',
-    overflowY: 'auto',
-    display: 'flex',
-    flexDirection: 'column',
-    paddingRight: '10px',
-  },
-  consultationCard: {
-    maxHeight: 'calc(100vh - 210px)',
-    minHeight: '500px',
-    overflowY: 'auto',
-    display: 'flex',
-    flexDirection: 'column',
-    paddingRight: '10px',
-  },
   panelTitle: {
     fontSize: '1.15rem',
     fontWeight: '700',
@@ -579,30 +553,14 @@ const styles = {
     marginBottom: '20px',
     borderLeft: '4px solid var(--color-primary)',
   },
-  vitalsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
-    gap: '10px',
-    fontSize: '0.85rem',
-  },
   form: {
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
   },
-  soapSection: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '14px',
-  },
   prescriptionSection: {
     borderTop: '1px solid var(--border-color)',
     paddingTop: '16px',
-  },
-  prescriptionFields: {
-    display: 'flex',
-    gap: '10px',
-    marginBottom: '12px',
   },
   prescriptionList: {
     display: 'flex',

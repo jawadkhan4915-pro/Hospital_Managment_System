@@ -165,12 +165,12 @@ const PatientDashboard = () => {
               <label className="form-label">Full Legal Name</label>
               <input type="text" name="name" className="form-control" placeholder="Johnathan Doe" required />
             </div>
-            <div style={styles.formRow}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="responsive-form-row">
+              <div className="form-group">
                 <label className="form-label">Date of Birth</label>
                 <input type="date" name="dob" className="form-control" required />
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label className="form-label">Gender</label>
                 <select name="gender" className="form-control" required>
                   <option value="Male">Male</option>
@@ -179,12 +179,12 @@ const PatientDashboard = () => {
                 </select>
               </div>
             </div>
-            <div style={styles.formRow}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="responsive-form-row">
+              <div className="form-group">
                 <label className="form-label">Contact Phone</label>
                 <input type="tel" name="phone" className="form-control" placeholder="+1 555-0192" required />
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label className="form-label">Blood Group</label>
                 <select name="blood" className="form-control">
                   <option value="O+">O+</option>
@@ -213,7 +213,7 @@ const PatientDashboard = () => {
 
   return (
     <div className="animate-fade-in" style={styles.container}>
-      <div style={styles.header}>
+      <div className="responsive-toolbar">
         <div>
           <h2>Patient Portal: {profile.name}</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
@@ -225,7 +225,7 @@ const PatientDashboard = () => {
         </span>
       </div>
 
-      <div style={styles.layoutGrid}>
+      <div className="responsive-content-grid">
         {/* Book Appointment Panel */}
         <div className="card">
           <h3 style={styles.panelTitle}>
@@ -248,8 +248,8 @@ const PatientDashboard = () => {
                 ))}
               </select>
             </div>
-            <div style={styles.formRow}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="responsive-form-row">
+              <div className="form-group">
                 <label className="form-label">Consultation Date</label>
                 <input
                   type="date"
@@ -259,7 +259,7 @@ const PatientDashboard = () => {
                   required
                 />
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label className="form-label">Time Slot</label>
                 <select
                   className="form-control"
@@ -365,7 +365,7 @@ const PatientDashboard = () => {
       </div>
 
       {/* Medical EMR Reports & Invoices */}
-      <div style={styles.layoutGrid2}>
+      <div className="responsive-content-grid">
         <div className="card">
           <h3 style={styles.panelTitle}>
             <FileText size={20} color="var(--color-primary)" /> EMR Clinical Reports
@@ -442,27 +442,10 @@ const styles = {
     flexDirection: 'column',
     gap: '24px',
   },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: '16px',
-  },
   patientIdBadge: {
     padding: '8px 16px',
     fontSize: '0.9rem',
     fontWeight: '700',
-  },
-  layoutGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
-    gap: '24px',
-  },
-  layoutGrid2: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-    gap: '24px',
   },
   panelTitle: {
     fontSize: '1.15rem',
@@ -475,10 +458,6 @@ const styles = {
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '14px',
-  },
-  formRow: {
-    display: 'flex',
     gap: '14px',
   },
   list: {

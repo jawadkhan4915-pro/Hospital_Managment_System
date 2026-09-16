@@ -57,8 +57,8 @@ const QRCodeGenerator = ({ value = '', size = 160, fgColor = '#0f172a', bgColor 
   const cellSize = size / N;
 
   return (
-    <div style={{ display: 'inline-block', padding: '12px', background: bgColor, borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+    <div style={{ display: 'inline-block', padding: '10px', background: bgColor, borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', maxWidth: '100%' }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ maxWidth: '100%', height: 'auto', display: 'block' }}>
         <rect width={size} height={size} fill={bgColor} />
         {matrix.map((row, r) =>
           row.map((cell, c) =>

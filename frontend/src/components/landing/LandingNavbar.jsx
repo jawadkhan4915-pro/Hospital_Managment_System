@@ -79,13 +79,13 @@ export default function LandingNavbar() {
           {user ? (
             <button
               onClick={() => navigate('/dashboard')}
-              className="btn btn-primary btn-md shadow-lg hidden xs:flex items-center gap-2 group"
+              className="btn btn-primary btn-md shadow-lg hidden sm:flex items-center gap-2 group"
             >
               <span>Dashboard Hub</span>
               <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </button>
           ) : (
-            <div className="hidden xs:flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
               <button
                 onClick={() => navigate('/auth')}
                 className="btn btn-secondary text-xs sm:text-sm"
@@ -94,7 +94,7 @@ export default function LandingNavbar() {
               </button>
               <button
                 onClick={() => navigate('/auth')}
-                className="btn btn-primary text-xs sm:text-sm hidden sm:inline-flex"
+                className="btn btn-primary text-xs sm:text-sm"
               >
                 <Sparkles size={16} />
                 <span>Get Started</span>

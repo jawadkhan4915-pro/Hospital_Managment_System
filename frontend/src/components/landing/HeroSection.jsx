@@ -101,19 +101,19 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.25 }}
-              className="w-full pt-6 border-t border-[var(--border-color)] grid grid-cols-3 gap-4"
+              className="w-full pt-6 border-t border-[var(--border-color)] grid grid-cols-1 min-[440px]:grid-cols-3 gap-3 sm:gap-4"
             >
-              <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+              <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-center sm:text-left">
                 <div className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">6 Roles</div>
                 <div className="text-xs text-[var(--text-tertiary)] font-medium">RBAC Workspaces</div>
               </div>
 
-              <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+              <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-center sm:text-left">
                 <div className="text-xl sm:text-2xl font-bold text-[var(--color-success)]">100%</div>
                 <div className="text-xs text-[var(--text-tertiary)] font-medium">OTP Secured</div>
               </div>
 
-              <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+              <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-center sm:text-left">
                 <div className="text-xl sm:text-2xl font-bold text-[var(--color-primary)]">&lt;50ms</div>
                 <div className="text-xs text-[var(--text-tertiary)] font-medium">Live Queue Sync</div>
               </div>
@@ -132,10 +132,10 @@ export default function HeroSection() {
             <div className="rounded-2xl p-2.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] shadow-xl relative overflow-hidden">
               
               {/* Photo Selector Switcher */}
-              <div className="flex items-center justify-between gap-1 p-1.5 mb-2 bg-[var(--bg-tertiary)] rounded-xl border border-[var(--border-color)] text-xs font-semibold">
+              <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-1 p-1.5 mb-2 bg-[var(--bg-tertiary)] rounded-xl border border-[var(--border-color)] text-xs font-semibold">
                 <button
                   onClick={() => setActiveTab('facility')}
-                  className={`flex-1 py-1.5 px-3 rounded-lg transition-all ${
+                  className={`flex-1 min-w-[95px] py-1.5 px-2 sm:px-3 rounded-lg text-center transition-all ${
                     activeTab === 'facility'
                       ? 'bg-[var(--bg-secondary)] text-[var(--color-primary)] shadow-sm font-bold'
                       : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
@@ -145,7 +145,7 @@ export default function HeroSection() {
                 </button>
                 <button
                   onClick={() => setActiveTab('doctors')}
-                  className={`flex-1 py-1.5 px-3 rounded-lg transition-all ${
+                  className={`flex-1 min-w-[95px] py-1.5 px-2 sm:px-3 rounded-lg text-center transition-all ${
                     activeTab === 'doctors'
                       ? 'bg-[var(--bg-secondary)] text-[var(--color-primary)] shadow-sm font-bold'
                       : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
@@ -155,7 +155,7 @@ export default function HeroSection() {
                 </button>
                 <button
                   onClick={() => setActiveTab('icu')}
-                  className={`flex-1 py-1.5 px-3 rounded-lg transition-all ${
+                  className={`flex-1 min-w-[95px] py-1.5 px-2 sm:px-3 rounded-lg text-center transition-all ${
                     activeTab === 'icu'
                       ? 'bg-[var(--bg-secondary)] text-[var(--color-primary)] shadow-sm font-bold'
                       : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'

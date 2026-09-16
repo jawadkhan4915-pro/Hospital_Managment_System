@@ -202,23 +202,23 @@ const PharmacistDashboard = () => {
           </div>
         </div>
 
-        <form onSubmit={handleScanQr} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <form onSubmit={handleScanQr} className="responsive-toolbar" style={{ marginTop: '12px' }}>
           <input
             type="text"
             className="form-control"
             placeholder='Paste or scan QR Code text payload (e.g. {"type":"PRESCRIPTION_SLIP",...})'
             value={qrInput}
             onChange={(e) => setQrInput(e.target.value)}
-            style={{ flex: 1, minWidth: '280px' }}
+            style={{ flex: 1, minWidth: 'min(100%, 260px)' }}
           />
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary w-full sm:w-auto">
             <QrCode size={16} /> Scan QR Code
           </button>
         </form>
 
         {scannedPrescription && (
           <div style={{ marginTop: '16px', padding: '16px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <div className="responsive-toolbar" style={{ marginBottom: '10px' }}>
               <h4 style={{ fontSize: '1rem', color: 'var(--color-primary)' }}>
                 Prescription File: {scannedPrescription.patientName} (CNIC: {scannedPrescription.cnic})
               </h4>
@@ -237,7 +237,7 @@ const PharmacistDashboard = () => {
               ))}
             </div>
 
-            <button onClick={handleDispenseScannedRx} className="btn btn-success" disabled={submitting}>
+            <button onClick={handleDispenseScannedRx} className="btn btn-success w-full sm:w-auto" disabled={submitting}>
               <CheckCircle2 size={18} /> {submitting ? 'Fulfilling Stock...' : 'Auto-Dispense Prescribed Stock'}
             </button>
           </div>
@@ -256,7 +256,7 @@ const PharmacistDashboard = () => {
         </div>
       )}
 
-      <div style={styles.contentGrid}>
+      <div className="responsive-content-grid">
         {/* Add Inventory Item */}
         <div className="card">
           <h3 style={styles.cardTitle}>
@@ -274,8 +274,8 @@ const PharmacistDashboard = () => {
                 required
               />
             </div>
-            <div style={styles.formRow}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="responsive-form-row">
+              <div className="form-group">
                 <label className="form-label">Category</label>
                 <select
                   className="form-control"
@@ -287,7 +287,7 @@ const PharmacistDashboard = () => {
                   <option value="Assets">Assets</option>
                 </select>
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label className="form-label">Unit Price ($)</label>
                 <input
                   type="number"
@@ -298,8 +298,8 @@ const PharmacistDashboard = () => {
                 />
               </div>
             </div>
-            <div style={styles.formRow}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="responsive-form-row">
+              <div className="form-group">
                 <label className="form-label">Quantity</label>
                 <input
                   type="number"
@@ -309,7 +309,7 @@ const PharmacistDashboard = () => {
                   required
                 />
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label className="form-label">Reorder Limit</label>
                 <input
                   type="number"
@@ -320,8 +320,8 @@ const PharmacistDashboard = () => {
                 />
               </div>
             </div>
-            <div style={styles.formRow}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="responsive-form-row">
+              <div className="form-group">
                 <label className="form-label">Expiry Date</label>
                 <input
                   type="date"
@@ -330,7 +330,7 @@ const PharmacistDashboard = () => {
                   onChange={(e) => setItemForm({ ...itemForm, expiryDate: e.target.value })}
                 />
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label className="form-label">Supplier</label>
                 <input
                   type="text"
@@ -389,11 +389,11 @@ const PharmacistDashboard = () => {
 
       {/* Inventory Table */}
       <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+        <div className="responsive-toolbar" style={{ marginBottom: '20px' }}>
           <h3 style={styles.cardTitle}>
             <Pill size={20} color="var(--color-primary)" /> Medicine Stock Directory
           </h3>
-          <div style={{ position: 'relative', width: '260px' }}>
+          <div style={{ position: 'relative', minWidth: '240px' }}>
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
             <input
               type="text"
@@ -482,11 +482,6 @@ const styles = {
     alignItems: 'center',
     gap: '10px',
   },
-  contentGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
-    gap: '24px',
-  },
   cardTitle: {
     fontSize: '1.15rem',
     fontWeight: '700',
@@ -498,10 +493,6 @@ const styles = {
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '14px',
-  },
-  formRow: {
-    display: 'flex',
     gap: '14px',
   },
 };

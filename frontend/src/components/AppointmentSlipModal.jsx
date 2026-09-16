@@ -32,11 +32,11 @@ const AppointmentSlipModal = ({ appointment, onClose }) => {
   return (
     <div className="modal-overlay-responsive">
       <div className="modal-card-responsive animate-fade-in">
-        <div style={styles.topBar}>
+        <div className="responsive-toolbar no-print" style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--border-color)' }}>
           <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Official Appointment Slip</h3>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <button className="btn btn-primary btn-sm" onClick={handlePrint}>
-              <Printer size={16} /> <span className="hidden sm:inline">Print Slip</span>
+              <Printer size={16} /> <span>Print Slip</span>
             </button>
             <button className="btn btn-secondary btn-sm" onClick={onClose} aria-label="Close">
               <X size={16} />
