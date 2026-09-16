@@ -2,7 +2,10 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { SkeletonCard, SkeletonTable } from '../components/SkeletonLoader.jsx';
-import { CalendarDays, FileText, CreditCard, HeartPulse, User, CheckCircle2, Calendar } from 'lucide-react';
+import DiagnosticLabModal from '../components/DiagnosticLabModal.jsx';
+import TelehealthRoomModal from '../components/TelehealthRoomModal.jsx';
+import VitalsAnalyticsChart from '../components/VitalsAnalyticsChart.jsx';
+import { CalendarDays, FileText, CreditCard, HeartPulse, User, CheckCircle2, Calendar, Video, FlaskConical, Printer } from 'lucide-react';
 
 const PatientDashboard = () => {
   const { fetchWithAuth } = useContext(AuthContext);
@@ -23,6 +26,10 @@ const PatientDashboard = () => {
 
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);
+
+  // Advanced features modals state
+  const [showLabModal, setShowLabModal] = useState(false);
+  const [selectedApptForTelehealth, setSelectedApptForTelehealth] = useState(null);
 
   useEffect(() => {
     loadPatientData();
@@ -220,9 +227,27 @@ const PatientDashboard = () => {
             Personal Health Management & Appointments
           </p>
         </div>
-        <span className="badge badge-primary" style={styles.patientIdBadge}>
-          Patient ID: {profile.patientId}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm flex items-center gap-1.5 text-xs"
+            onClick={() => setShowLabModal(true)}
+          >
+            <FlaskConical size={14} className="text-indigo-500" />
+            <span>Diagnostic Slips</span>
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm flex items-center gap-1.5 text-xs"
+            onClick={() => window.print()}
+          >
+            <Printer size={14} />
+            <span>Print Medical Summary</span>
+          </button>
+          <span className="badge badge-primary" style={styles.patientIdBadge}>
+            Patient ID: {profile.patientId}
+          </span>
+        </div>
       </div>
 
       <div className="responsive-content-grid">
@@ -312,9 +337,21 @@ const PatientDashboard = () => {
                     <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                       Slot: {appt.timeSlot} (Queue: #{appt.queueNumber})
                     </span>
-                    <span className={`badge ${appt.status === 'Completed' ? 'badge-success' : appt.status === 'Cancelled' ? 'badge-danger' : 'badge-primary'}`}>
-                      {appt.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {appt.status !== 'Completed' && appt.status !== 'Cancelled' && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedApptForTelehealth(appt)}
+                          className="btn btn-primary btn-sm text-[11px] py-1 px-2.5 flex items-center gap-1 cursor-pointer"
+                        >
+                          <Video size={12} />
+                          <span>Join Video Call</span>
+                        </button>
+                      )}
+                      <span className={`badge ${appt.status === 'Completed' ? 'badge-success' : appt.status === 'Cancelled' ? 'badge-danger' : 'badge-primary'}`}>
+                        {appt.status}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))
@@ -323,12 +360,21 @@ const PatientDashboard = () => {
         </div>
       </div>
 
-      {/* Vitals History */}
+      {/* Vitals Telemetry Trends & History */}
       <div className="card">
         <h3 style={styles.panelTitle}>
-          <HeartPulse size={20} color="var(--color-danger)" /> Recorded Vital Readings
+          <HeartPulse size={20} color="var(--color-danger)" /> Recorded Vital Signs & Telemetry Trends
         </h3>
-        <div className="table-container" style={{ marginTop: '16px' }}>
+        
+        {/* Interactive Vitals Trends Analytics */}
+        <div style={{ marginTop: '16px', marginBottom: '20px' }}>
+          <VitalsAnalyticsChart
+            vitalsHistory={profile.vitals}
+            patientName={profile.name}
+          />
+        </div>
+
+        <div className="table-container">
           <table>
             <thead>
               <tr>
@@ -432,6 +478,25 @@ const PatientDashboard = () => {
           </div>
         </div>
       </div>
+      {/* Diagnostic Lab Modal */}
+      {showLabModal && (
+        <DiagnosticLabModal
+          isOpen={showLabModal}
+          onClose={() => setShowLabModal(false)}
+          patient={profile}
+          currentUserRole="Patient"
+        />
+      )}
+
+      {/* Telehealth Room Modal */}
+      {selectedApptForTelehealth && (
+        <TelehealthRoomModal
+          isOpen={!!selectedApptForTelehealth}
+          onClose={() => setSelectedApptForTelehealth(null)}
+          appointment={selectedApptForTelehealth}
+          currentUserRole="Patient"
+        />
+      )}
     </div>
   );
 };

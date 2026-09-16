@@ -2,7 +2,9 @@ import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { SkeletonCard, SkeletonTable } from '../components/SkeletonLoader.jsx';
-import { UserPlus, Heart, Calendar, Eye, Search } from 'lucide-react';
+import DiagnosticLabModal from '../components/DiagnosticLabModal.jsx';
+import VitalsAnalyticsChart from '../components/VitalsAnalyticsChart.jsx';
+import { UserPlus, Heart, Calendar, Eye, Search, FlaskConical, LineChart as ChartIcon } from 'lucide-react';
 
 const StaffDashboard = () => {
   const { fetchWithAuth } = useContext(AuthContext);
@@ -12,6 +14,8 @@ const StaffDashboard = () => {
   const [doctors, setDoctors] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showLabModal, setShowLabModal] = useState(false);
+  const [showVitalsChart, setShowVitalsChart] = useState(false);
 
   // New Patient Form
   const [patientForm, setPatientForm] = useState({
@@ -278,10 +282,37 @@ const StaffDashboard = () => {
             <div>
               <div className="responsive-toolbar" style={{ marginBottom: '16px' }}>
                 <h3 style={styles.cardTitle}>Selected: {selectedPatient.name}</h3>
-                <button className="btn btn-secondary btn-sm" onClick={() => setSelectedPatient(null)}>
-                  Cancel
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm flex items-center gap-1 text-xs"
+                    onClick={() => setShowLabModal(true)}
+                  >
+                    <FlaskConical size={13} className="text-indigo-500" />
+                    <span>Lab & Diagnostics</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-sm flex items-center gap-1 text-xs ${showVitalsChart ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => setShowVitalsChart(!showVitalsChart)}
+                  >
+                    <ChartIcon size={13} />
+                    <span>{showVitalsChart ? 'Hide Trends' : 'Telemetry Trends'}</span>
+                  </button>
+                  <button className="btn btn-secondary btn-sm" onClick={() => setSelectedPatient(null)}>
+                    Cancel
+                  </button>
+                </div>
               </div>
+
+              {showVitalsChart && (
+                <div style={{ marginBottom: '16px' }}>
+                  <VitalsAnalyticsChart
+                    vitalsHistory={selectedPatient.vitals}
+                    patientName={selectedPatient.name}
+                  />
+                </div>
+              )}
 
               {/* Record Vitals form */}
               <form onSubmit={handleAddVitals} style={{ ...styles.form, marginBottom: '24px' }}>
@@ -439,6 +470,16 @@ const StaffDashboard = () => {
           </table>
         </div>
       </div>
+
+      {/* Diagnostic Lab Modal */}
+      {showLabModal && selectedPatient && (
+        <DiagnosticLabModal
+          isOpen={showLabModal}
+          onClose={() => setShowLabModal(false)}
+          patient={selectedPatient}
+          currentUserRole="Nurse"
+        />
+      )}
     </div>
   );
 };

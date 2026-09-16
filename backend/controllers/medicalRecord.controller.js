@@ -1,6 +1,8 @@
 import medicalRecordService from '../services/medicalRecord.service.js';
 import staffService from '../services/staff.service.js';
 import patientService from '../services/patient.service.js';
+import cdssService from '../services/cdss.service.js';
+import Patient from '../models/Patient.js';
 
 export const addRecord = async (req, res, next) => {
   try {
@@ -54,6 +56,37 @@ export const getAllRecords = async (req, res, next) => {
   try {
     const records = await medicalRecordService.getAllRecords();
     res.status(200).json({ success: true, data: records });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Evaluate prescription with Clinical Decision Support System (CDSS)
+ * POST /api/v1/records/cdss-evaluate
+ */
+export const evaluateCdss = async (req, res, next) => {
+  try {
+    const { patientId, medications } = req.body;
+
+    let patientAllergies = [];
+    let chronicConditions = [];
+
+    if (patientId) {
+      const patient = await Patient.findById(patientId);
+      if (patient && patient.medicalHistory) {
+        patientAllergies = patient.medicalHistory.allergies || [];
+        chronicConditions = patient.medicalHistory.chronicIllnesses || [];
+      }
+    }
+
+    const result = cdssService.evaluatePrescriptionSafety({
+      medications: medications || [],
+      patientAllergies,
+      chronicConditions,
+    });
+
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }

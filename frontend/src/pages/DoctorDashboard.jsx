@@ -4,7 +4,12 @@ import { useToast } from '../context/ToastContext.jsx';
 import { SkeletonCard, SkeletonTable } from '../components/SkeletonLoader.jsx';
 import PrescriptionSlipModal from '../components/PrescriptionSlipModal.jsx';
 import PatientHistoryModal from '../components/PatientHistoryModal.jsx';
-import { Calendar, FileText, CheckCircle, FilePlus, Activity, Plus, Trash2, Clock, Search, History, CreditCard } from 'lucide-react';
+import DiagnosticLabModal from '../components/DiagnosticLabModal.jsx';
+import TelehealthRoomModal from '../components/TelehealthRoomModal.jsx';
+import VitalsAnalyticsChart from '../components/VitalsAnalyticsChart.jsx';
+import CdssWarningCard from '../components/CdssWarningCard.jsx';
+import { analyzePrescriptionSafety } from '../utils/cdssEngine.js';
+import { Calendar, FileText, CheckCircle, FilePlus, Activity, Plus, Trash2, Clock, Search, History, CreditCard, FlaskConical, Video, LineChart as ChartIcon } from 'lucide-react';
 
 const DoctorDashboard = () => {
   const { fetchWithAuth } = useContext(AuthContext);
@@ -37,8 +42,28 @@ const DoctorDashboard = () => {
   const [medFreq, setMedFreq] = useState('');
   const [medDur, setMedDur] = useState('');
 
+  // Advanced Clinical Features State
+  const [cdssAnalysis, setCdssAnalysis] = useState({ hasWarnings: false, warnings: [] });
+  const [overrideConfirmed, setOverrideConfirmed] = useState(false);
+  const [overrideReason, setOverrideReason] = useState('');
+  const [showLabModal, setShowLabModal] = useState(false);
+  const [telehealthActive, setTelehealthActive] = useState(false);
+  const [showVitalsChart, setShowVitalsChart] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  // Real-time CDSS prescription evaluation
+  useEffect(() => {
+    if (prescription.length > 0) {
+      const allergies = selectedAppointment?.patientId?.medicalHistory?.allergies || [];
+      const analysis = analyzePrescriptionSafety(prescription, allergies);
+      setCdssAnalysis(analysis);
+    } else {
+      setCdssAnalysis({ hasWarnings: false, warnings: [] });
+      setOverrideConfirmed(false);
+    }
+  }, [prescription, selectedAppointment]);
 
   useEffect(() => {
     loadDoctorData();
@@ -122,9 +147,13 @@ const DoctorDashboard = () => {
   const handleSubmitEMR = async (e) => {
     e.preventDefault();
     if (!selectedAppointment) return;
-    setSubmitting(true);
+    if (cdssAnalysis.requiresOverride && !overrideConfirmed) {
+      showError('CDSS Alert: Critical drug interaction or allergy contraindication detected. Please confirm the Clinical Override before proceeding.');
+      return;
+    }
 
     try {
+      setSubmitting(true);
       const recordRes = await fetchWithAuth('/api/v1/records', {
         method: 'POST',
         body: JSON.stringify({
@@ -270,19 +299,60 @@ const DoctorDashboard = () => {
                 <h3 style={styles.panelTitle}>
                   <FilePlus size={20} color="var(--color-success)" /> Consultation: {selectedAppointment.patientId?.name}
                 </h3>
-                {selectedAppointment.patientId?.cnic && (
+                
+                <div className="flex flex-wrap items-center gap-2">
                   <button
-                    className="btn btn-secondary btn-sm w-full sm:w-auto"
-                    onClick={async () => {
-                      const res = await fetchWithAuth(`/api/v1/patients/cnic/${encodeURIComponent(selectedAppointment.patientId.cnic)}`);
-                      const d = await res.json();
-                      if (d.data) setSelectedHistory(d.data);
-                    }}
+                    type="button"
+                    className="btn btn-secondary btn-sm flex items-center gap-1 text-xs"
+                    onClick={() => setTelehealthActive(true)}
                   >
-                    <History size={14} /> Full History
+                    <Video size={14} className="text-cyan-500" />
+                    <span>Virtual Telehealth</span>
                   </button>
-                )}
+
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm flex items-center gap-1 text-xs"
+                    onClick={() => setShowLabModal(true)}
+                  >
+                    <FlaskConical size={14} className="text-indigo-500" />
+                    <span>Diagnostic Lab</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`btn btn-sm flex items-center gap-1 text-xs ${showVitalsChart ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => setShowVitalsChart(!showVitalsChart)}
+                  >
+                    <ChartIcon size={14} />
+                    <span>{showVitalsChart ? 'Hide Telemetry' : 'Vitals Telemetry'}</span>
+                  </button>
+
+                  {selectedAppointment.patientId?.cnic && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm flex items-center gap-1 text-xs"
+                      onClick={async () => {
+                        const res = await fetchWithAuth(`/api/v1/patients/cnic/${encodeURIComponent(selectedAppointment.patientId.cnic)}`);
+                        const d = await res.json();
+                        if (d.data) setSelectedHistory(d.data);
+                      }}
+                    >
+                      <History size={14} /> <span>History</span>
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* Vitals Telemetry Trends Chart */}
+              {showVitalsChart && (
+                <div style={{ marginBottom: '16px' }}>
+                  <VitalsAnalyticsChart
+                    vitalsHistory={selectedAppointment.patientId?.vitals}
+                    patientName={selectedAppointment.patientId?.name}
+                  />
+                </div>
+              )}
               
               {selectedAppointment.patientId?.vitals?.length > 0 && (
                 <div style={styles.vitalsRef}>
@@ -405,6 +475,17 @@ const DoctorDashboard = () => {
                       ))}
                     </div>
                   )}
+
+                  {/* CDSS Safety Warnings & Allergy Check */}
+                  <div style={{ marginTop: '16px' }}>
+                    <CdssWarningCard
+                      analysis={cdssAnalysis}
+                      overrideConfirmed={overrideConfirmed}
+                      setOverrideConfirmed={setOverrideConfirmed}
+                      overrideReason={overrideReason}
+                      setOverrideReason={setOverrideReason}
+                    />
+                  </div>
                 </div>
 
                 <div className="form-group" style={{ marginTop: '15px' }}>
@@ -497,6 +578,26 @@ const DoctorDashboard = () => {
         <PatientHistoryModal
           historyData={selectedHistory}
           onClose={() => setSelectedHistory(null)}
+        />
+      )}
+
+      {/* Diagnostic Lab & Pathology Modal */}
+      {showLabModal && (
+        <DiagnosticLabModal
+          isOpen={showLabModal}
+          onClose={() => setShowLabModal(false)}
+          patient={selectedAppointment?.patientId}
+          currentUserRole="Doctor"
+        />
+      )}
+
+      {/* Virtual Telehealth Video Consultation Room */}
+      {telehealthActive && (
+        <TelehealthRoomModal
+          isOpen={telehealthActive}
+          onClose={() => setTelehealthActive(false)}
+          appointment={selectedAppointment}
+          currentUserRole="Doctor"
         />
       )}
     </div>

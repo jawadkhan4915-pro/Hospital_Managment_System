@@ -8,6 +8,8 @@ import Appointment from '../models/Appointment.js';
 import MedicalRecord from '../models/MedicalRecord.js';
 import Billing from '../models/Billing.js';
 import Inventory from '../models/Inventory.js';
+import DiagnosticOrder from '../models/DiagnosticOrder.js';
+import EmergencyAlert from '../models/EmergencyAlert.js';
 import logger from '../config/logger.js';
 
 dotenv.config();
@@ -24,6 +26,8 @@ const seedData = async (exitProcess = false) => {
     await MedicalRecord.deleteMany();
     await Billing.deleteMany();
     await Inventory.deleteMany();
+    await DiagnosticOrder.deleteMany();
+    await EmergencyAlert.deleteMany();
 
     logger.info('Database cleared.');
 
@@ -204,6 +208,75 @@ const seedData = async (exitProcess = false) => {
     ]);
 
     logger.info('Pharmacy store inventory items populated.');
+
+    // 6. Create Sample Diagnostic Test Orders
+    await DiagnosticOrder.create([
+      {
+        orderNumber: 'DX-892104',
+        patientId: patientProfile._id,
+        patientName: patientProfile.name,
+        doctorId: doctorStaff._id,
+        doctorName: 'Dr. Gregory House',
+        testCategory: 'Hematology',
+        testName: 'Complete Blood Count (CBC)',
+        priority: 'Routine',
+        specimen: 'Whole Blood (EDTA)',
+        status: 'Completed',
+        clinicalImpression: 'Normocytic, normochromic RBCs. No blast cells identified. Mild reactive thrombocytosis.',
+        technicianName: 'Dr. H. Vance, FRCPath',
+        reportedAt: new Date(),
+        parameters: [
+          { name: 'Hemoglobin (Hb)', value: '14.2', unit: 'g/dL', referenceRange: '13.5 - 17.5', flag: 'NORMAL' },
+          { name: 'White Blood Cell (WBC)', value: '7.8', unit: 'x10^3/uL', referenceRange: '4.5 - 11.0', flag: 'NORMAL' },
+          { name: 'Platelets', value: '265', unit: 'x10^3/uL', referenceRange: '150 - 450', flag: 'NORMAL' },
+          { name: 'Red Blood Cell (RBC)', value: '4.8', unit: 'x10^6/uL', referenceRange: '4.3 - 5.9', flag: 'NORMAL' },
+          { name: 'Hematocrit (Hct)', value: '44.1', unit: '%', referenceRange: '41 - 50', flag: 'NORMAL' },
+        ],
+      },
+      {
+        orderNumber: 'DX-904312',
+        patientId: patientProfile._id,
+        patientName: patientProfile.name,
+        doctorId: doctorStaff._id,
+        doctorName: 'Dr. Gregory House',
+        testCategory: 'Biochemistry',
+        testName: 'Comprehensive Metabolic Panel (CMP)',
+        priority: 'Urgent',
+        specimen: 'Serum (SST)',
+        status: 'Completed',
+        clinicalImpression: 'Renal panel within normal limits. Blood glucose optimal.',
+        technicianName: 'Dr. H. Vance, FRCPath',
+        reportedAt: new Date(),
+        parameters: [
+          { name: 'Fasting Blood Glucose', value: '92', unit: 'mg/dL', referenceRange: '70 - 99', flag: 'NORMAL' },
+          { name: 'Blood Urea Nitrogen (BUN)', value: '14', unit: 'mg/dL', referenceRange: '7 - 20', flag: 'NORMAL' },
+          { name: 'Serum Creatinine', value: '0.9', unit: 'mg/dL', referenceRange: '0.7 - 1.3', flag: 'NORMAL' },
+          { name: 'Serum Sodium (Na+)', value: '140', unit: 'mEq/L', referenceRange: '135 - 145', flag: 'NORMAL' },
+          { name: 'Serum Potassium (K+)', value: '4.2', unit: 'mEq/L', referenceRange: '3.5 - 5.0', flag: 'NORMAL' },
+        ],
+      },
+    ]);
+
+    logger.info('Sample diagnostic lab results seeded.');
+
+    // 7. Seed Past Emergency Incident Log
+    await EmergencyAlert.create({
+      codeType: 'Code Blue',
+      severity: 'Immediate Life Threat',
+      location: { floor: '2nd Floor', wing: 'Cardiac Care Unit (CCU)', room: 'Room 208' },
+      details: 'Spontaneous sinus arrest with ventricular escape rhythm. Crash cart deployed.',
+      patientName: 'Historical Case Ref #402',
+      status: 'RESOLVED',
+      initiatedBy: { userId: doctorUser._id, name: 'Dr. Gregory House', role: 'Doctor' },
+      responders: [
+        { userId: nurseUser._id, name: 'Clara Oswald', role: 'Nurse', notes: 'Defibrillator and IV epinephrine readied' },
+      ],
+      resolvedBy: { userId: doctorUser._id, name: 'Dr. Gregory House' },
+      resolvedAt: new Date(),
+      resolutionNotes: 'Patient achieved ROSC (Return of Spontaneous Circulation). Transferred to Intensive Care.',
+    });
+
+    logger.info('Emergency alert incident history seeded.');
     logger.info('Database seeding sequence completed successfully!');
     if (exitProcess) {
       process.exit(0);

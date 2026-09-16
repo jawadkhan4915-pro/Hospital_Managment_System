@@ -6,6 +6,7 @@ import { ToastProvider } from './context/ToastContext.jsx';
 import { SkeletonCard } from './components/SkeletonLoader.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import Topbar from './components/Topbar.jsx';
+import EmergencyAlertBanner from './components/EmergencyAlertBanner.jsx';
 import { Activity } from 'lucide-react';
 
 // Lazy loading pages & dashboard modules for optimal code splitting
@@ -62,6 +63,9 @@ const DashboardHub = () => {
       <div className="flex-1 lg:pl-72 flex flex-col min-w-0">
         {/* Extracted Topbar */}
         <Topbar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+
+        {/* Global Hospital Emergency Code Alert Banner & Broadcast System */}
+        <EmergencyAlertBanner />
 
         {/* Dashboard Main View Container with Framer Motion transitions */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">

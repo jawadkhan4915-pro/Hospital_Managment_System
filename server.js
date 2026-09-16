@@ -21,6 +21,8 @@ import appointmentRoutes from './backend/routes/appointment.routes.js';
 import medicalRecordRoutes from './backend/routes/medicalRecord.routes.js';
 import billingRoutes from './backend/routes/billing.routes.js';
 import inventoryRoutes from './backend/routes/inventory.routes.js';
+import emergencyRoutes from './backend/routes/emergency.routes.js';
+import diagnosticRoutes from './backend/routes/diagnostic.routes.js';
 
 import { sanitizeNoSqlInjection, sanitizeXssInput } from './backend/middleware/security.middleware.js';
 
@@ -140,6 +142,8 @@ app.use('/api/v1/appointments', appointmentRoutes);
 app.use('/api/v1/records', medicalRecordRoutes);
 app.use('/api/v1/billing', billingRoutes);
 app.use('/api/v1/inventory', inventoryRoutes);
+app.use('/api/v1/emergency', emergencyRoutes);
+app.use('/api/v1/diagnostics', diagnosticRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {
